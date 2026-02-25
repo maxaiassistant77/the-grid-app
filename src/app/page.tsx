@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { getCurrentUser, createUser } from '@/lib/store';
+import { useAuth } from '@/lib/auth/context';
 
 // Pre-computed random positions for grid dots
 const GRID_DOTS = [
@@ -30,11 +30,12 @@ const GRID_DOTS = [
 ];
 
 export default function LandingPage() {
+  const { user, loading, signInWithEmail } = useAuth();
   const router = useRouter();
-  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [agentName, setAgentName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState('');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -42,45 +43,77 @@ export default function LandingPage() {
   }, []);
 
   useEffect(() => {
-    if (mounted) {
-      const user = getCurrentUser();
-      if (user) {
-        router.push('/dashboard');
-      }
+    if (mounted && user && !loading) {
+      router.push('/dashboard');
     }
-  }, [mounted, router]);
+  }, [mounted, user, loading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !email.trim() || !agentName.trim()) return;
+    if (!email.trim()) return;
 
     setIsLoading(true);
+    setError('');
 
-    // Simulate a brief loading state for UX
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    createUser(name.trim(), email.trim(), agentName.trim());
-    router.push('/dashboard');
+    try {
+      await signInWithEmail(email.trim());
+      setIsSuccess(true);
+    } catch (err: any) {
+      setError(err.message || 'Failed to send magic link');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const gridDots = useMemo(() => GRID_DOTS, []);
 
-  if (!mounted) return null;
+  if (!mounted || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6c5ce7]"></div>
+      </div>
+    );
+  }
+
+  if (isSuccess) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#1a1a2e] to-[#16213e] flex items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="text-center"
+        >
+          <div className="w-16 h-16 bg-[#00e676] rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-8 h-8 text-[#0a0a0f]" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-4">Check Your Email</h1>
+          <p className="text-gray-300 max-w-md mx-auto">
+            We sent a magic link to <strong className="text-[#00e676]">{email}</strong>. 
+            Click the link to enter The Grid and set up your agent.
+          </p>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen grid-pattern flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#1a1a2e] to-[#16213e] flex flex-col items-center justify-center px-4">
       {/* Background animated grid dots */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         {gridDots.map((dot, i) => (
           <motion.div
             key={i}
-            className="absolute w-2 h-2 rounded-full bg-[#00B4E6]/20"
+            className="absolute w-2 h-2 rounded-full"
             style={{
               left: `${dot.left}%`,
               top: `${dot.top}%`,
+              background: 'linear-gradient(45deg, #6c5ce7, #00e676)',
             }}
             animate={{
-              opacity: [0.2, 0.5, 0.2],
+              opacity: [0.2, 0.6, 0.2],
               scale: [1, 1.5, 1],
             }}
             transition={{
@@ -99,13 +132,13 @@ export default function LandingPage() {
         transition={{ duration: 0.5 }}
         className="text-center mb-8"
       >
-        <p className="text-[#00B4E6] text-sm font-semibold tracking-[0.3em] uppercase mb-2">
+        <p className="text-[#00e676] text-sm font-semibold tracking-[0.3em] uppercase mb-2">
           Agents to Life
         </p>
-        <h1 className="text-4xl md:text-5xl font-bold text-[#0a0a0f] mb-2">
-          Welcome to <span className="text-[#00B4E6]">The Grid</span>
+        <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
+          Welcome to <span className="bg-gradient-to-r from-[#6c5ce7] to-[#00e676] bg-clip-text text-transparent">The Grid</span>
         </h1>
-        <p className="text-gray-500 text-lg">
+        <p className="text-gray-300 text-lg">
           Track your AI agent. Climb the leaderboard. Build in public.
         </p>
       </motion.div>
@@ -117,25 +150,10 @@ export default function LandingPage() {
         transition={{ duration: 0.5, delay: 0.2 }}
         className="w-full max-w-md"
       >
-        <div className="bg-white rounded-2xl shadow-[0_4px_40px_rgba(0,0,0,0.08)] p-8">
+        <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-8 shadow-2xl">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1.5">
-                Your Name
-              </label>
-              <input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="John Doe"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#00B4E6] focus:ring-2 focus:ring-[#00B4E6]/20 outline-none transition-all text-[#0a0a0f] placeholder:text-gray-400"
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="email" className="block text-sm font-medium text-white mb-1.5">
                 Email Address
               </label>
               <input
@@ -144,30 +162,26 @@ export default function LandingPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="john@example.com"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#00B4E6] focus:ring-2 focus:ring-[#00B4E6]/20 outline-none transition-all text-[#0a0a0f] placeholder:text-gray-400"
+                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:border-[#6c5ce7] focus:ring-2 focus:ring-[#6c5ce7]/20 outline-none transition-all text-white placeholder:text-gray-400"
                 required
+                disabled={isLoading}
               />
             </div>
 
-            <div>
-              <label htmlFor="agentName" className="block text-sm font-medium text-gray-700 mb-1.5">
-                Your AI Agent&apos;s Name
-              </label>
-              <input
-                id="agentName"
-                type="text"
-                value={agentName}
-                onChange={(e) => setAgentName(e.target.value)}
-                placeholder="TaskBot 3000"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#00B4E6] focus:ring-2 focus:ring-[#00B4E6]/20 outline-none transition-all text-[#0a0a0f] placeholder:text-gray-400"
-                required
-              />
-            </div>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm"
+              >
+                {error}
+              </motion.div>
+            )}
 
             <motion.button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-[#00B4E6] hover:bg-[#00a0cc] text-white font-semibold py-3.5 px-6 rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full bg-gradient-to-r from-[#6c5ce7] to-[#00e676] hover:from-[#5b4bd3] hover:to-[#00d967] text-white font-semibold py-3.5 px-6 rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed"
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
             >
@@ -177,17 +191,17 @@ export default function LandingPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  Entering The Grid...
+                  Sending Magic Link...
                 </span>
               ) : (
-                'Enter The Grid'
+                'Send Magic Link'
               )}
             </motion.button>
           </form>
         </div>
 
         <p className="text-center text-gray-400 text-sm mt-6">
-          Join the community building AI agents in public
+          We'll send you a secure link to sign in without a password
         </p>
       </motion.div>
 
