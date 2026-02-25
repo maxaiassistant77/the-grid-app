@@ -10,7 +10,8 @@ import { StatCard } from '@/components/StatCard';
 import { LogModal } from '@/components/LogModal';
 import { Leaderboard } from '@/components/Leaderboard';
 import { Challenge } from '@/components/Challenge';
-import { ActivityFeed } from '@/components/ActivityFeed';
+import { InstalledSkills } from '@/components/InstalledSkills';
+import { DailyActivity } from '@/components/DailyActivity';
 import { Achievements } from '@/components/Achievements';
 import { User, UserStats, Achievement } from '@/lib/types';
 import {
@@ -20,7 +21,6 @@ import {
   logActivity,
   calculateScore,
   getLevel,
-  getLevelColor,
   checkAndUnlockAchievements,
   getAchievements
 } from '@/lib/store';
@@ -118,6 +118,7 @@ export default function DashboardPage() {
   }
 
   const level = getLevel(score);
+  const levelNumber = score >= 800 ? 15 : score >= 600 ? 12 : score >= 400 ? 9 : score >= 200 ? 6 : 3;
   const progressPercent = Math.min(100, (score / 1000) * 100);
 
   const getModalTitle = () => {
@@ -139,122 +140,73 @@ export default function DashboardPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl shadow-[0_4px_40px_rgba(0,0,0,0.06)] border border-gray-100 p-6 mb-6"
+          className="bg-white rounded-2xl border border-gray-100 p-6 mb-6"
         >
           <div className="flex flex-col md:flex-row items-center gap-6">
-            {/* Progress ring */}
-            <ProgressRing progress={progressPercent} size={140} strokeWidth={10}>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-[#0a0a0f]">{Math.min(score, 1000)}</p>
-                <p className="text-xs text-gray-500">/1000</p>
+            {/* Left side - Agent info */}
+            <div className="flex items-center gap-5 flex-1">
+              {/* Agent Avatar */}
+              <div className="w-20 h-20 rounded-full bg-[#1a2b3c] flex items-center justify-center">
+                <svg className="w-10 h-10 text-gray-300" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                </svg>
               </div>
-            </ProgressRing>
 
-            {/* Agent info */}
-            <div className="flex-1 text-center md:text-left">
-              <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
-                <h1 className="text-2xl font-bold text-[#0a0a0f]">{user.agentName}</h1>
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50">
-                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                  <span className="text-xs font-medium text-green-700">Online</span>
+              {/* Agent Details */}
+              <div>
+                <div className="flex items-center gap-3 mb-1">
+                  <h1 className="text-2xl font-bold text-[#0a0a0f]">{user.agentName}</h1>
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 border border-green-200">
+                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    <span className="text-xs font-medium text-green-700">Online & Working</span>
+                  </div>
                 </div>
-              </div>
-
-              <p className="text-gray-500 mb-4">Agent Score: {score.toLocaleString()} points</p>
-
-              <div className="flex items-center justify-center md:justify-start gap-3">
-                <span className={`px-4 py-2 rounded-full text-sm font-semibold text-white ${getLevelColor(level)}`}>
-                  {level}
-                </span>
-                {score > 1000 && (
-                  <span className="px-3 py-1.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
-                    +{(score - 1000).toLocaleString()} bonus
+                <div className="flex items-center gap-3">
+                  <span className="px-3 py-1 rounded-full text-sm font-semibold text-white bg-[#1a3a4a]">
+                    Level {levelNumber}
                   </span>
-                )}
+                  <span className="text-gray-500">AI {level}</span>
+                </div>
               </div>
             </div>
 
-            {/* Level info */}
-            <div className="hidden lg:block text-right bg-gray-50 rounded-xl p-4">
-              <p className="text-xs text-gray-500 mb-2">Level Progress</p>
-              <div className="space-y-1 text-xs">
-                <div className={`flex items-center gap-2 ${score >= 800 ? 'text-[#0a0a0f] font-semibold' : 'text-gray-400'}`}>
-                  <span>800+</span>
-                  <span>Legend</span>
+            {/* Right side - Score Ring */}
+            <div className="flex flex-col items-center">
+              <p className="text-sm text-gray-500 mb-2">Employee Score</p>
+              <ProgressRing progress={progressPercent} size={120} strokeWidth={8}>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-[#0a0a0f]">{Math.min(score, 1000)}</p>
+                  <p className="text-xs text-gray-400">/ 1000</p>
                 </div>
-                <div className={`flex items-center gap-2 ${score >= 600 && score < 800 ? 'text-[#0a0a0f] font-semibold' : 'text-gray-400'}`}>
-                  <span>600+</span>
-                  <span>Architect</span>
-                </div>
-                <div className={`flex items-center gap-2 ${score >= 400 && score < 600 ? 'text-[#0a0a0f] font-semibold' : 'text-gray-400'}`}>
-                  <span>400+</span>
-                  <span>Creator</span>
-                </div>
-                <div className={`flex items-center gap-2 ${score >= 200 && score < 400 ? 'text-[#0a0a0f] font-semibold' : 'text-gray-400'}`}>
-                  <span>200+</span>
-                  <span>Builder</span>
-                </div>
-                <div className={`flex items-center gap-2 ${score < 200 ? 'text-[#0a0a0f] font-semibold' : 'text-gray-400'}`}>
-                  <span>0+</span>
-                  <span>Apprentice</span>
-                </div>
-              </div>
+              </ProgressRing>
             </div>
           </div>
         </motion.div>
 
-        {/* Stats Row */}
+        {/* Stats Row - 3 cards */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+          className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"
         >
           <StatCard
-            title="Tasks Completed"
+            title="tasks completed"
             value={stats.tasksCompleted}
-            icon={
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            }
-            onAdd={() => setModalType('tasks')}
           />
           <StatCard
-            title="Hours Saved"
+            title="hours saved"
             value={stats.hoursSaved}
-            icon={
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            }
-            onAdd={() => setModalType('hours')}
           />
           <StatCard
-            title="Revenue Generated"
+            title="revenue generated"
             value={stats.revenueGenerated}
             prefix="$"
-            icon={
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            }
-            onAdd={() => setModalType('revenue')}
-          />
-          <StatCard
-            title="Day Streak"
-            value={stats.currentStreak}
-            suffix={stats.currentStreak > 0 ? " 🔥" : ""}
-            icon={
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-              </svg>
-            }
-            onAdd={() => setModalType('tasks')}
+            variant="success"
           />
         </motion.div>
 
-        {/* Leaderboard and Challenge */}
+        {/* Leaderboard and Challenge - side by side */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -269,21 +221,31 @@ export default function DashboardPage() {
           </div>
         </motion.div>
 
-        {/* Activity Feed */}
+        {/* Installed Skills */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
           className="mb-6"
         >
-          <ActivityFeed refreshTrigger={refreshTrigger} />
+          <InstalledSkills />
+        </motion.div>
+
+        {/* What Your AI Did Today */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mb-6"
+        >
+          <DailyActivity />
         </motion.div>
 
         {/* Achievements */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.5 }}
         >
           <Achievements refreshTrigger={refreshTrigger} />
         </motion.div>
