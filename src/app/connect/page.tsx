@@ -77,6 +77,7 @@ export default function AgentConnectPage() {
       // Create agent
       const { data, error } = await supabase
         .from('agents')
+        // @ts-ignore - Supabase type inference issue
         .insert({
           user_id: user.id,
           name: agentName.trim(),
@@ -114,6 +115,7 @@ export default function AgentConnectPage() {
       // Update agent status to connected
       await supabase
         .from('agents')
+        // @ts-ignore - Supabase type inference issue
         .update({ 
           status: 'connected',
           last_seen_at: new Date().toISOString()

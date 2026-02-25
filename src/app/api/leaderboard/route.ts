@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     query = query
       .order('tasks_completed', { ascending: false })
       .order('current_streak', { ascending: false })
-      .limit(filters.limit);
+      .limit(filters.limit || 50);
 
     const { data: leaderboardData, error } = await query;
 
@@ -63,11 +63,11 @@ export async function GET(request: NextRequest) {
         const { data: recentActivity } = await supabase
           .from('activity_logs')
           .select('points_earned, created_at')
-          .eq('agent_id', entry.agent_id)
+          .eq('agent_id', (entry as any).agent_id)
           .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Last 24 hours
           .order('created_at', { ascending: false });
 
-        const recentPoints = recentActivity?.reduce((sum, activity) => sum + (activity.points_earned || 0), 0) || 0;
+        const recentPoints = recentActivity?.reduce((sum, activity: any) => sum + (activity.points_earned || 0), 0) || 0;
         
         // Simple trend calculation (in reality, you'd compare with previous rankings)
         let trend: 'up' | 'down' | 'same' = 'same';
@@ -75,46 +75,46 @@ export async function GET(request: NextRequest) {
         else if (recentPoints < 2) trend = 'down';
 
         // Status calculation
-        const isOnline = entry.agent_status === 'connected' && entry.last_seen_at 
-          ? (Date.now() - new Date(entry.last_seen_at).getTime()) < 15 * 60 * 1000 // 15 minutes
+        const isOnline = (entry as any).agent_status === 'connected' && (entry as any).last_seen_at 
+          ? (Date.now() - new Date((entry as any).last_seen_at).getTime()) < 15 * 60 * 1000 // 15 minutes
           : false;
 
         // Calculate additional metrics for display
-        const complexityTotal = entry.simple_tasks + entry.medium_tasks + entry.complex_tasks + entry.epic_tasks;
+        const complexityTotal = (entry as any).simple_tasks + (entry as any).medium_tasks + (entry as any).complex_tasks + (entry as any).epic_tasks;
         const complexityRatio = complexityTotal > 0 ? {
-          simple: Math.round((entry.simple_tasks / complexityTotal) * 100),
-          medium: Math.round((entry.medium_tasks / complexityTotal) * 100),
-          complex: Math.round((entry.complex_tasks / complexityTotal) * 100),
-          epic: Math.round((entry.epic_tasks / complexityTotal) * 100)
+          simple: Math.round(((entry as any).simple_tasks / complexityTotal) * 100),
+          medium: Math.round(((entry as any).medium_tasks / complexityTotal) * 100),
+          complex: Math.round(((entry as any).complex_tasks / complexityTotal) * 100),
+          epic: Math.round(((entry as any).epic_tasks / complexityTotal) * 100)
         } : null;
 
         return {
           rank,
-          user_id: entry.user_id,
-          agent_id: entry.agent_id,
-          name: entry.name,
-          agent_name: entry.agent_name,
-          avatar_url: entry.avatar_url,
-          total_score: entry.total_score,
-          level: entry.level,
-          tasks_completed: entry.tasks_completed,
-          current_streak: entry.current_streak,
-          skills_count: entry.skills_count,
+          user_id: (entry as any).user_id,
+          agent_id: (entry as any).agent_id,
+          name: (entry as any).name,
+          agent_name: (entry as any).agent_name,
+          avatar_url: (entry as any).avatar_url,
+          total_score: (entry as any).total_score,
+          level: (entry as any).level,
+          tasks_completed: (entry as any).tasks_completed,
+          current_streak: (entry as any).current_streak,
+          skills_count: (entry as any).skills_count,
           status: isOnline ? 'online' : 'offline',
-          last_seen_at: entry.last_seen_at,
+          last_seen_at: (entry as any).last_seen_at,
           trend,
           recent_points: recentPoints,
           complexity_breakdown: {
-            simple: entry.simple_tasks,
-            medium: entry.medium_tasks,
-            complex: entry.complex_tasks,
-            epic: entry.epic_tasks
+            simple: (entry as any).simple_tasks,
+            medium: (entry as any).medium_tasks,
+            complex: (entry as any).complex_tasks,
+            epic: (entry as any).epic_tasks
           },
           complexity_ratio: complexityRatio,
           // Scores for different categories
-          activity_score: entry.activity_score,
-          capability_score: entry.capability_score,
-          complexity_score: entry.complexity_score
+          activity_score: (entry as any).activity_score,
+          capability_score: (entry as any).capability_score,
+          complexity_score: (entry as any).complexity_score
         };
       })
     );

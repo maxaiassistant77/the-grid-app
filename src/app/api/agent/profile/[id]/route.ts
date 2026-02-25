@@ -3,10 +3,10 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const agentId = params.id;
+    const { id: agentId } = await params;
     const supabase = await createClient();
 
     // Get agent with user profile
@@ -70,10 +70,10 @@ export async function GET(
         *,
         achievements (*)
       `)
-      .eq('user_id', agent.user_id);
+      .eq('user_id', (agent as any).user_id);
 
     // Calculate level
-    const totalScore = stats?.total_score || 0;
+    const totalScore = (stats as any)?.total_score || 0;
     let level = 'Apprentice';
     if (totalScore >= 5000) level = 'Legend';
     else if (totalScore >= 2500) level = 'Architect';
@@ -82,73 +82,73 @@ export async function GET(
 
     // Build radar chart data
     const radarData = {
-      activity: Math.min((stats?.activity_score || 0) / 10, 100),
+      activity: Math.min(((stats as any)?.activity_score || 0) / 10, 100),
       capability: Math.min((skills?.length || 0) * 10, 100),
-      complexity: Math.min((stats?.complexity_score || 0) / 50, 100),
-      memory: Math.min((stats?.memory_strength || 0), 100),
-      proactivity: Math.min((stats?.proactivity_score || 0), 100),
+      complexity: Math.min(((stats as any)?.complexity_score || 0) / 50, 100),
+      memory: Math.min(((stats as any)?.memory_strength || 0), 100),
+      proactivity: Math.min(((stats as any)?.proactivity_score || 0), 100),
       integration: Math.min((integrations?.length || 0) * 15, 100)
     };
 
     // Get complexity distribution
     const complexityDistribution = {
-      simple: stats?.simple_tasks || 0,
-      medium: stats?.medium_tasks || 0,
-      complex: stats?.complex_tasks || 0,
-      epic: stats?.epic_tasks || 0
+      simple: (stats as any)?.simple_tasks || 0,
+      medium: (stats as any)?.medium_tasks || 0,
+      complex: (stats as any)?.complex_tasks || 0,
+      epic: (stats as any)?.epic_tasks || 0
     };
 
     // Calculate streaks and status
-    const isOnline = agent.status === 'connected' && agent.last_seen_at 
-      ? (Date.now() - new Date(agent.last_seen_at).getTime()) < 15 * 60 * 1000 // 15 minutes
+    const isOnline = (agent as any).status === 'connected' && (agent as any).last_seen_at 
+      ? (Date.now() - new Date((agent as any).last_seen_at).getTime()) < 15 * 60 * 1000 // 15 minutes
       : false;
 
     return NextResponse.json({
       agent: {
-        id: agent.id,
-        name: agent.name,
-        platform: agent.platform,
-        model: agent.model,
+        id: (agent as any).id,
+        name: (agent as any).name,
+        platform: (agent as any).platform,
+        model: (agent as any).model,
         status: isOnline ? 'online' : 'offline',
-        last_seen_at: agent.last_seen_at,
-        created_at: agent.created_at
+        last_seen_at: (agent as any).last_seen_at,
+        created_at: (agent as any).created_at
       },
-      profile: agent.profiles,
+      profile: (agent as any).profiles,
       stats: {
         total_score: totalScore,
         level,
-        tasks_completed: stats?.tasks_completed || 0,
-        current_streak: stats?.current_streak || 0,
-        longest_streak: stats?.longest_streak || 0,
-        sessions_count: stats?.sessions_count || 0,
-        total_session_duration: stats?.total_session_duration || 0,
-        uptime_percentage: stats?.uptime_percentage || 0
+        tasks_completed: (stats as any)?.tasks_completed || 0,
+        current_streak: (stats as any)?.current_streak || 0,
+        longest_streak: (stats as any)?.longest_streak || 0,
+        sessions_count: (stats as any)?.sessions_count || 0,
+        total_session_duration: (stats as any)?.total_session_duration || 0,
+        uptime_percentage: (stats as any)?.uptime_percentage || 0
       },
       radar_data: radarData,
       complexity_distribution: complexityDistribution,
-      skills: (skills || []).map(skill => ({
+      skills: (skills || []).map((skill: any) => ({
         name: skill.name,
         category: skill.category,
         icon: skill.icon,
         description: skill.description,
         installed_at: skill.installed_at
       })),
-      integrations: (integrations || []).map(integration => ({
+      integrations: (integrations || []).map((integration: any) => ({
         name: integration.name,
         connected_at: integration.connected_at
       })),
       memory: memory ? {
-        total_memories: memory.total_memories,
-        memory_depth_days: memory.memory_depth_days,
-        categories: memory.categories,
-        last_memory_at: memory.last_memory_at
+        total_memories: (memory as any).total_memories,
+        memory_depth_days: (memory as any).memory_depth_days,
+        categories: (memory as any).categories,
+        last_memory_at: (memory as any).last_memory_at
       } : {
         total_memories: 0,
         memory_depth_days: 0,
         categories: {},
         last_memory_at: null
       },
-      achievements: (userAchievements || []).map(ua => ({
+      achievements: (userAchievements || []).map((ua: any) => ({
         id: ua.achievements.id,
         name: ua.achievements.name,
         description: ua.achievements.description,
@@ -156,7 +156,7 @@ export async function GET(
         category: ua.achievements.category,
         unlocked_at: ua.unlocked_at
       })),
-      recent_activities: (activities || []).map(activity => ({
+      recent_activities: (activities || []).map((activity: any) => ({
         type: activity.type,
         complexity: activity.complexity,
         description: activity.description,

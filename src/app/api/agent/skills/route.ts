@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
     // Update agent last seen
     await supabase
       .from('agents')
+      // @ts-ignore - Supabase type inference issue
       .update({
         last_seen_at: new Date().toISOString()
       })
@@ -107,6 +108,7 @@ export async function POST(request: NextRequest) {
     if (skillsToUpsert.length > 0) {
       await supabase
         .from('agent_skills')
+        // @ts-ignore - Supabase type inference issue
         .upsert(skillsToUpsert, {
           onConflict: 'agent_id,name'
         });
@@ -123,6 +125,7 @@ export async function POST(request: NextRequest) {
 
     await supabase
       .from('agent_stats')
+      // @ts-ignore - Supabase type inference issue
       .upsert({
         agent_id: agent.id,
         capability_score: capabilityScore,

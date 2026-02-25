@@ -62,6 +62,7 @@ export async function POST(request: NextRequest) {
     // Update agent last seen
     await supabase
       .from('agents')
+      // @ts-ignore - Supabase type inference issue
       .update({
         last_seen_at: new Date().toISOString()
       })
@@ -79,6 +80,7 @@ export async function POST(request: NextRequest) {
 
     await supabase
       .from('agent_memory')
+      // @ts-ignore - Supabase type inference issue
       .upsert(memoryData, {
         onConflict: 'agent_id'
       });
@@ -113,6 +115,7 @@ export async function POST(request: NextRequest) {
     // Update quality score in agent stats
     await supabase
       .from('agent_stats')
+      // @ts-ignore - Supabase type inference issue
       .upsert({
         agent_id: agent.id,
         memory_strength: Math.round(memoryStrength),
