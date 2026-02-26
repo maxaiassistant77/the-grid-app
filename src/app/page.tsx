@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/auth/context';
+import { createClient } from '@/lib/supabase/client';
+import { Mail, Lock, User as UserIcon, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 
-// Pre-computed random positions for grid dots
 const GRID_DOTS = [
   { left: 5, top: 12, duration: 3.2, delay: 0.1 },
   { left: 15, top: 45, duration: 4.1, delay: 1.2 },
@@ -29,19 +30,22 @@ const GRID_DOTS = [
   { left: 92, top: 69, duration: 4.1, delay: 0.0 },
 ];
 
+type AuthMode = 'signin' | 'signup' | 'forgot' | 'reset-sent';
+
 export default function LandingPage() {
   const { user, loading, signUp, signIn } = useAuth();
   const router = useRouter();
+  const [mode, setMode] = useState<AuthMode>('signin');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isSignUp, setIsSignUp] = useState(true);
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (mounted && user && !loading) {
@@ -49,11 +53,42 @@ export default function LandingPage() {
     }
   }, [mounted, user, loading, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const switchMode = (newMode: AuthMode) => {
+    setMode(newMode);
+    setError('');
+    setShowPassword(false);
+  };
+
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) return;
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      await signIn(email.trim(), password);
+      router.push('/dashboard');
+    } catch (err: any) {
+      if (err.message?.includes('Invalid login credentials')) {
+        setError('Incorrect email or password. Try again.');
+      } else {
+        setError(err.message || 'Something went wrong');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !email.trim() || !password.trim()) return;
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
       return;
     }
 
@@ -61,31 +96,45 @@ export default function LandingPage() {
     setError('');
 
     try {
-      if (isSignUp) {
-        try {
-          await signUp(email.trim(), password);
-          router.push('/dashboard');
-        } catch (signUpErr: any) {
-          // If user exists, try signing in instead
-          if (signUpErr.message?.includes('User already registered') || signUpErr.message?.includes('already been registered')) {
-            await signIn(email.trim(), password);
-            router.push('/dashboard');
-          } else {
-            throw signUpErr;
-          }
-        }
-      } else {
-        await signIn(email.trim(), password);
-        router.push('/dashboard');
+      await signUp(email.trim(), password);
+      // Update profile name after signup
+      const supabase = createClient();
+      const { data: { user: newUser } } = await supabase.auth.getUser();
+      if (newUser) {
+        await supabase
+          .from('profiles')
+          // @ts-ignore - Supabase type inference issue
+          .update({ name: name.trim() })
+          .eq('id', newUser.id);
       }
+      router.push('/dashboard');
     } catch (err: any) {
-      if (err.message?.includes('Invalid login credentials')) {
-        setError('Wrong email or password. Try again.');
-      } else if (err.message?.includes('Email not confirmed')) {
-        setError('Email not confirmed. Try creating a new account with a different email.');
+      if (err.message?.includes('already')) {
+        setError('An account with this email already exists. Try signing in.');
       } else {
         setError(err.message || 'Something went wrong');
       }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      switchMode('reset-sent');
+    } catch (err: any) {
+      setError(err.message || 'Failed to send reset email');
     } finally {
       setIsLoading(false);
     }
@@ -95,7 +144,7 @@ export default function LandingPage() {
 
   if (!mounted || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#1a1a2e] to-[#16213e] flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6c5ce7]"></div>
       </div>
     );
@@ -109,20 +158,9 @@ export default function LandingPage() {
           <motion.div
             key={i}
             className="absolute w-2 h-2 rounded-full"
-            style={{
-              left: `${dot.left}%`,
-              top: `${dot.top}%`,
-              background: 'linear-gradient(45deg, #6c5ce7, #00e676)',
-            }}
-            animate={{
-              opacity: [0.2, 0.6, 0.2],
-              scale: [1, 1.5, 1],
-            }}
-            transition={{
-              duration: dot.duration,
-              repeat: Infinity,
-              delay: dot.delay,
-            }}
+            style={{ left: `${dot.left}%`, top: `${dot.top}%`, background: 'linear-gradient(45deg, #6c5ce7, #00e676)' }}
+            animate={{ opacity: [0.2, 0.6, 0.2], scale: [1, 1.5, 1] }}
+            transition={{ duration: dot.duration, repeat: Infinity, delay: dot.delay }}
           />
         ))}
       </div>
@@ -131,7 +169,6 @@ export default function LandingPage() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
         className="text-center mb-8 relative z-10"
       >
         <p className="text-[#00e676] text-sm font-semibold tracking-[0.3em] uppercase mb-2">
@@ -145,102 +182,274 @@ export default function LandingPage() {
         </p>
       </motion.div>
 
-      {/* Sign up card */}
+      {/* Auth Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
+        transition={{ delay: 0.2 }}
         className="w-full max-w-md relative z-10"
       >
         <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-6 sm:p-8 shadow-2xl">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-white mb-1.5">
-                Email Address
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="john@example.com"
-                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:border-[#6c5ce7] focus:ring-2 focus:ring-[#6c5ce7]/20 outline-none transition-all text-white placeholder:text-gray-400"
-                required
-                disabled={isLoading}
-              />
-            </div>
+          <AnimatePresence mode="wait">
+            {/* ====== SIGN IN ====== */}
+            {mode === 'signin' && (
+              <motion.div key="signin" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+                <h2 className="text-2xl font-bold text-white mb-1">Sign In</h2>
+                <p className="text-gray-400 text-sm mb-6">Welcome back to The Grid</p>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-white mb-1.5">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Min 6 characters"
-                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:border-[#6c5ce7] focus:ring-2 focus:ring-[#6c5ce7]/20 outline-none transition-all text-white placeholder:text-gray-400"
-                required
-                disabled={isLoading}
-                minLength={6}
-              />
-            </div>
+                <form onSubmit={handleSignIn} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Email</label>
+                    <div className="relative">
+                      <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:border-[#6c5ce7] focus:ring-2 focus:ring-[#6c5ce7]/20 outline-none text-white placeholder:text-gray-500 transition-all"
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
 
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm"
-              >
-                {error}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-sm font-medium text-gray-300">Password</label>
+                      <button type="button" onClick={() => switchMode('forgot')} className="text-xs text-[#6c5ce7] hover:text-[#a29bfe] transition-colors">
+                        Forgot password?
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Your password"
+                        className="w-full pl-10 pr-10 py-3 rounded-xl bg-white/10 border border-white/20 focus:border-[#6c5ce7] focus:ring-2 focus:ring-[#6c5ce7]/20 outline-none text-white placeholder:text-gray-500 transition-all"
+                        required
+                        disabled={isLoading}
+                      />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors">
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {error && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                      {error}
+                    </motion.div>
+                  )}
+
+                  <motion.button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-gradient-to-r from-[#6c5ce7] to-[#00e676] hover:from-[#5b4bd3] hover:to-[#00d967] text-white font-semibold py-3.5 rounded-xl transition-all disabled:opacity-70"
+                    whileTap={{ scale: 0.99 }}
+                  >
+                    {isLoading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>
+                        Signing in...
+                      </span>
+                    ) : 'Sign In'}
+                  </motion.button>
+                </form>
+
+                <div className="mt-5 text-center">
+                  <span className="text-gray-500 text-sm">Don't have an account? </span>
+                  <button onClick={() => switchMode('signup')} className="text-sm text-[#00e676] hover:text-[#00ff88] font-medium transition-colors">
+                    Create one
+                  </button>
+                </div>
               </motion.div>
             )}
 
-            <motion.button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-gradient-to-r from-[#6c5ce7] to-[#00e676] hover:from-[#5b4bd3] hover:to-[#00d967] text-white font-semibold py-3.5 px-6 rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-            >
-              {isLoading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  {isSignUp ? 'Creating Account...' : 'Signing In...'}
-                </span>
-              ) : (
-                isSignUp ? 'Create Account' : 'Sign In'
-              )}
-            </motion.button>
-          </form>
+            {/* ====== SIGN UP ====== */}
+            {mode === 'signup' && (
+              <motion.div key="signup" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <h2 className="text-2xl font-bold text-white mb-1">Create Account</h2>
+                <p className="text-gray-400 text-sm mb-6">Join The Grid and start tracking your agent</p>
 
-          <div className="mt-4 text-center">
-            <button
-              onClick={() => { setIsSignUp(!isSignUp); setError(''); }}
-              className="text-sm text-gray-400 hover:text-white transition-colors"
-            >
-              {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
-            </button>
-          </div>
+                <form onSubmit={handleSignUp} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Full Name</label>
+                    <div className="relative">
+                      <UserIcon size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Your name"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:border-[#6c5ce7] focus:ring-2 focus:ring-[#6c5ce7]/20 outline-none text-white placeholder:text-gray-500 transition-all"
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Email</label>
+                    <div className="relative">
+                      <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:border-[#6c5ce7] focus:ring-2 focus:ring-[#6c5ce7]/20 outline-none text-white placeholder:text-gray-500 transition-all"
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Password</label>
+                    <div className="relative">
+                      <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Min 6 characters"
+                        className="w-full pl-10 pr-10 py-3 rounded-xl bg-white/10 border border-white/20 focus:border-[#6c5ce7] focus:ring-2 focus:ring-[#6c5ce7]/20 outline-none text-white placeholder:text-gray-500 transition-all"
+                        required
+                        disabled={isLoading}
+                        minLength={6}
+                      />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors">
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Confirm Password</label>
+                    <div className="relative">
+                      <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Confirm your password"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:border-[#6c5ce7] focus:ring-2 focus:ring-[#6c5ce7]/20 outline-none text-white placeholder:text-gray-500 transition-all"
+                        required
+                        disabled={isLoading}
+                        minLength={6}
+                      />
+                    </div>
+                  </div>
+
+                  {error && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                      {error}
+                    </motion.div>
+                  )}
+
+                  <motion.button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-gradient-to-r from-[#6c5ce7] to-[#00e676] hover:from-[#5b4bd3] hover:to-[#00d967] text-white font-semibold py-3.5 rounded-xl transition-all disabled:opacity-70"
+                    whileTap={{ scale: 0.99 }}
+                  >
+                    {isLoading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>
+                        Creating account...
+                      </span>
+                    ) : 'Create Account'}
+                  </motion.button>
+                </form>
+
+                <div className="mt-5 text-center">
+                  <span className="text-gray-500 text-sm">Already have an account? </span>
+                  <button onClick={() => switchMode('signin')} className="text-sm text-[#00e676] hover:text-[#00ff88] font-medium transition-colors">
+                    Sign in
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ====== FORGOT PASSWORD ====== */}
+            {mode === 'forgot' && (
+              <motion.div key="forgot" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <button onClick={() => switchMode('signin')} className="flex items-center space-x-1 text-gray-400 hover:text-white text-sm mb-4 transition-colors">
+                  <ArrowLeft size={14} />
+                  <span>Back to sign in</span>
+                </button>
+
+                <h2 className="text-2xl font-bold text-white mb-1">Reset Password</h2>
+                <p className="text-gray-400 text-sm mb-6">Enter your email and we'll send you a reset link</p>
+
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Email</label>
+                    <div className="relative">
+                      <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:border-[#6c5ce7] focus:ring-2 focus:ring-[#6c5ce7]/20 outline-none text-white placeholder:text-gray-500 transition-all"
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+
+                  {error && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                      {error}
+                    </motion.div>
+                  )}
+
+                  <motion.button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-gradient-to-r from-[#6c5ce7] to-[#00e676] hover:from-[#5b4bd3] hover:to-[#00d967] text-white font-semibold py-3.5 rounded-xl transition-all disabled:opacity-70"
+                    whileTap={{ scale: 0.99 }}
+                  >
+                    {isLoading ? 'Sending...' : 'Send Reset Link'}
+                  </motion.button>
+                </form>
+              </motion.div>
+            )}
+
+            {/* ====== RESET SENT ====== */}
+            {mode === 'reset-sent' && (
+              <motion.div key="reset-sent" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-4">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#00e676]/20 flex items-center justify-center">
+                  <Mail size={28} className="text-[#00e676]" />
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2">Check Your Email</h2>
+                <p className="text-gray-400 text-sm mb-6">
+                  We sent a password reset link to <span className="text-white font-medium">{email}</span>
+                </p>
+                <button
+                  onClick={() => switchMode('signin')}
+                  className="text-sm text-[#6c5ce7] hover:text-[#a29bfe] font-medium transition-colors"
+                >
+                  Back to sign in
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-
-        <p className="text-center text-gray-400 text-sm mt-6">
-          {isSignUp ? 'Create your account to start tracking your agent' : 'Welcome back to The Grid'}
-        </p>
       </motion.div>
 
       {/* Footer */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.4 }}
-        className="absolute bottom-6 text-center"
+        transition={{ delay: 0.4 }}
+        className="mt-8 text-center relative z-10"
       >
-        <p className="text-gray-400 text-xs">
+        <p className="text-gray-500 text-xs">
           Powered by the Agents to Life community
         </p>
       </motion.div>
