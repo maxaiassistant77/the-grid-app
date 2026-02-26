@@ -15,47 +15,57 @@ export function MobileNav() {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Don't show on login or connect pages
   if (pathname === '/' || pathname === '/connect') return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-black/80 backdrop-blur-xl border-t border-white/10">
-      <div className="flex items-center justify-around h-16 px-2">
-        {NAV_ITEMS.map((item) => {
-          const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
-          const Icon = item.icon;
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+      {/* Glow effect behind the nav */}
+      <div className="absolute inset-x-0 -top-4 h-8 bg-gradient-to-t from-amber-500/10 to-transparent pointer-events-none" />
+      
+      <div className="bg-black/90 backdrop-blur-xl border-t border-amber-400/20 shadow-[0_-4px_24px_rgba(251,191,36,0.08)]">
+        <div className="flex items-center justify-around h-16 px-2">
+          {NAV_ITEMS.map((item) => {
+            const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+            const Icon = item.icon;
 
-          return (
-            <button
-              key={item.href}
-              onClick={() => router.push(item.href)}
-              className="flex flex-col items-center justify-center flex-1 h-full relative"
-            >
-              {isActive && (
+            return (
+              <button
+                key={item.href}
+                onClick={() => router.push(item.href)}
+                className="flex flex-col items-center justify-center flex-1 h-full relative"
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="mobile-nav-indicator"
+                    className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-[3px] rounded-full bg-gradient-to-r from-amber-400 to-yellow-300"
+                    style={{ boxShadow: '0 0 12px rgba(251,191,36,0.6), 0 0 4px rgba(251,191,36,0.4)' }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  />
+                )}
                 <motion.div
-                  layoutId="mobile-nav-indicator"
-                  className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-[#6c5ce7] rounded-full"
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                />
-              )}
-              <Icon
-                size={22}
-                strokeWidth={isActive ? 2.5 : 1.5}
-                className={`transition-colors ${
-                  isActive ? 'text-[#6c5ce7]' : 'text-gray-500'
-                }`}
-              />
-              <span className={`text-[10px] mt-1 font-medium transition-colors ${
-                isActive ? 'text-[#6c5ce7]' : 'text-gray-500'
-              }`}>
-                {item.label}
-              </span>
-            </button>
-          );
-        })}
+                  animate={isActive ? { scale: [1, 1.15, 1] } : { scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Icon
+                    size={22}
+                    strokeWidth={isActive ? 2.5 : 1.5}
+                    className={`transition-colors duration-200 ${
+                      isActive ? 'text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.5)]' : 'text-gray-500'
+                    }`}
+                  />
+                </motion.div>
+                <span className={`text-[10px] mt-1 font-semibold transition-colors duration-200 ${
+                  isActive ? 'text-amber-400' : 'text-gray-500'
+                }`}>
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        {/* Safe area padding for devices with home indicator */}
+        <div className="h-[env(safe-area-inset-bottom)]" />
       </div>
-      {/* Safe area padding for devices with home indicator */}
-      <div className="h-[env(safe-area-inset-bottom)]" />
     </nav>
   );
 }

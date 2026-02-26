@@ -139,16 +139,16 @@ function ProfileContent() {
   };
 
   const RadarChart = ({ data }: { data: AgentProfile['radar_data'] }) => {
-    const baseSize = 300;
-    const center = baseSize / 2;
-    const baseRadius = 90;
+    const viewSize = 380;
+    const center = viewSize / 2;
+    const baseRadius = 100;
     const angles = [0, 60, 120, 180, 240, 300];
     const labels = ['Activity', 'Capability', 'Complexity', 'Memory', 'Proactivity', 'Integration'];
     const values = [data.activity, data.capability, data.complexity, data.memory, data.proactivity, data.integration];
 
-    const generatePath = (values: number[], maxValue = 100, radius = baseRadius) => {
+    const generatePath = (vals: number[], maxValue = 100, radius = baseRadius) => {
       const points = angles.map((angle, i) => {
-        const value = values[i] || 0;
+        const value = vals[i] || 0;
         const normalizedValue = (value / maxValue) * radius;
         const radian = (angle - 90) * (Math.PI / 180);
         const x = center + normalizedValue * Math.cos(radian);
@@ -161,36 +161,51 @@ function ProfileContent() {
     const dataPath = generatePath(values);
 
     return (
-      <div className="w-full flex items-center justify-center p-2 md:p-4">
-        <div className="relative w-full max-w-sm aspect-square">
-          <svg viewBox={`0 0 ${baseSize} ${baseSize}`} className="w-full h-full overflow-visible">
+      <div className="w-full flex items-center justify-center px-0 py-2">
+        <div className="relative w-full max-w-[340px] aspect-square">
+          <svg viewBox={`0 0 ${viewSize} ${viewSize}`} className="w-full h-full">
             <defs>
               <radialGradient id="radarGradient" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#6c5ce7" stopOpacity="0.1" />
+                <stop offset="0%" stopColor="#6c5ce7" stopOpacity="0.2" />
                 <stop offset="100%" stopColor="#6c5ce7" stopOpacity="0.05" />
               </radialGradient>
             </defs>
+            
+            {/* Grid rings */}
             {[0.2, 0.4, 0.6, 0.8, 1].map((factor, i) => (
-              <circle key={i} cx={center} cy={center} r={baseRadius * factor} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+              <circle key={i} cx={center} cy={center} r={baseRadius * factor} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1" strokeDasharray={i < 4 ? "4 4" : "none"} />
             ))}
+            
+            {/* Axis lines */}
             {angles.map((angle, i) => {
               const radian = (angle - 90) * (Math.PI / 180);
               const x = center + baseRadius * Math.cos(radian);
               const y = center + baseRadius * Math.sin(radian);
-              return <line key={i} x1={center} y1={center} x2={x} y2={y} stroke="rgba(255,255,255,0.1)" strokeWidth="1" />;
+              return <line key={i} x1={center} y1={center} x2={x} y2={y} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />;
             })}
-            <path d={dataPath} fill="url(#radarGradient)" stroke="#6c5ce7" strokeWidth="2" strokeLinejoin="round" />
+            
+            {/* Data fill */}
+            <path d={dataPath} fill="url(#radarGradient)" stroke="#6c5ce7" strokeWidth="2.5" strokeLinejoin="round" />
+            
+            {/* Data points with glow */}
             {angles.map((angle, i) => {
               const value = values[i] || 0;
               const normalizedValue = (value / 100) * baseRadius;
               const radian = (angle - 90) * (Math.PI / 180);
               const x = center + normalizedValue * Math.cos(radian);
               const y = center + normalizedValue * Math.sin(radian);
-              return <circle key={i} cx={x} cy={y} r="4" fill="#00e676" stroke="#ffffff" strokeWidth="2" />;
+              return (
+                <g key={i}>
+                  <circle cx={x} cy={y} r="8" fill="#00e676" fillOpacity="0.15" />
+                  <circle cx={x} cy={y} r="4" fill="#00e676" stroke="#ffffff" strokeWidth="2" />
+                </g>
+              );
             })}
+
+            {/* Labels */}
             {angles.map((angle, i) => {
               const radian = (angle - 90) * (Math.PI / 180);
-              const labelRadius = baseRadius + 40;
+              const labelRadius = baseRadius + 32;
               const x = center + labelRadius * Math.cos(radian);
               const y = center + labelRadius * Math.sin(radian);
               let textAnchor: 'start' | 'middle' | 'end' = 'middle';
@@ -198,8 +213,8 @@ function ProfileContent() {
               else if (angle > 210 && angle < 330) textAnchor = 'end';
               return (
                 <g key={i}>
-                  <text x={x} y={y - 5} textAnchor={textAnchor} className="fill-gray-300 text-xs font-medium" dominantBaseline="middle">{labels[i]}</text>
-                  <text x={x} y={y + 10} textAnchor={textAnchor} className="fill-green-400 text-sm font-bold" dominantBaseline="middle">{values[i]}</text>
+                  <text x={x} y={y - 6} textAnchor={textAnchor} dominantBaseline="middle" fill="#9ca3af" fontSize="11" fontWeight="500">{labels[i]}</text>
+                  <text x={x} y={y + 9} textAnchor={textAnchor} dominantBaseline="middle" fill="#00e676" fontSize="13" fontWeight="700">{values[i]}</text>
                 </g>
               );
             })}
