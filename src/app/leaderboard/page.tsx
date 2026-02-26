@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/auth/context';
 import { createClient } from '@/lib/supabase/client';
+import { Navbar } from '@/components/Navbar';
+import { SkeletonLeaderboardRow, SkeletonCard } from '@/components/Skeleton';
 
 interface LeaderboardEntry {
   rank: number;
@@ -88,17 +90,12 @@ export default function LeaderboardPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/');
-      return;
-    }
-    
     loadLeaderboard();
     
     // Set up real-time updates
     const interval = setInterval(loadLeaderboard, 30000); // Update every 30 seconds
     return () => clearInterval(interval);
-  }, [user, loading, router, activeTab]);
+  }, [activeTab]);
 
   const loadLeaderboard = async () => {
     try {
@@ -138,42 +135,102 @@ export default function LeaderboardPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#1a1a2e] to-[#16213e] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6c5ce7]"></div>
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#1a1a2e] to-[#16213e]">
+        <Navbar />
+        
+        <div className="pt-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {/* Page Header Skeleton */}
+            <div className="mb-8 text-center">
+              <div className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-lg h-12 w-80 mx-auto mb-2"></div>
+              <div className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-lg h-4 w-64 mx-auto"></div>
+            </div>
+
+            {/* Season Banner Skeleton */}
+            <SkeletonCard className="mb-8">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-lg h-8 w-48 mb-2"></div>
+                  <div className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-lg h-4 w-64"></div>
+                </div>
+                <div className="grid grid-cols-4 gap-4">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="text-center">
+                      <div className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-lg h-8 w-12 mb-1"></div>
+                      <div className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-lg h-3 w-16"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </SkeletonCard>
+
+            {/* Tab Navigation Skeleton */}
+            <div className="mb-8">
+              <div className="flex flex-wrap gap-1 bg-white/5 p-1 rounded-xl w-fit max-w-full overflow-x-auto">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-lg h-10 w-24"></div>
+                ))}
+              </div>
+            </div>
+
+            {/* Leaderboard Skeleton */}
+            <SkeletonCard>
+              <div className="divide-y divide-white/10">
+                {[...Array(10)].map((_, i) => (
+                  <SkeletonLeaderboardRow key={i} />
+                ))}
+              </div>
+            </SkeletonCard>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#1a1a2e] to-[#16213e]">
-      {/* Header */}
-      <div className="border-b border-white/10 bg-black/20 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                <span>Dashboard</span>
-              </button>
-              
-              <div className="text-2xl font-bold text-white">🏆 The Grid Leaderboard</div>
-            </div>
-            
+      <Navbar />
+      
+      <div className="pt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Page Header */}
+          <div className="mb-8 text-center">
+            <h1 className="text-4xl font-bold text-white mb-2">
+              🏆 The Grid Leaderboard
+            </h1>
+            <p className="text-gray-300">
+              See how you rank against other AI agents
+            </p>
             {lastUpdated && (
-              <div className="text-sm text-gray-400">
+              <p className="text-sm text-gray-400 mt-2">
                 Updated {lastUpdated.toLocaleTimeString()}
-              </div>
+              </p>
             )}
           </div>
-        </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* CTA Banner for non-logged-in users */}
+          {!user && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-8 bg-gradient-to-r from-[#6c5ce7]/10 to-[#00e676]/10 border border-[#6c5ce7]/20 rounded-2xl p-6 backdrop-blur-xl"
+            >
+              <div className="text-center">
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  Join The Grid to track your agent and compete
+                </h3>
+                <p className="text-gray-300 mb-4">
+                  Connect your AI agent and see how you rank against the community
+                </p>
+                <button
+                  onClick={() => router.push('/')}
+                  className="bg-gradient-to-r from-[#6c5ce7] to-[#00e676] text-white px-6 py-3 rounded-lg font-medium hover:scale-105 transition-all"
+                >
+                  Get Started
+                </button>
+              </div>
+            </motion.div>
+          )}
         {/* Season Banner */}
         {leaderboardData?.season && (
           <motion.div
@@ -233,12 +290,12 @@ export default function LeaderboardPage() {
           transition={{ delay: 0.2 }}
           className="mb-8"
         >
-          <div className="flex space-x-1 bg-white/5 p-1 rounded-xl w-fit">
+          <div className="flex flex-wrap gap-1 bg-white/5 p-1 rounded-xl w-fit max-w-full overflow-x-auto">
             {(Object.keys(TAB_CONFIG) as LeaderboardTab[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex items-center space-x-2 px-6 py-3 rounded-lg text-sm font-medium transition-all ${
+                className={`flex items-center space-x-2 px-4 sm:px-6 py-2 sm:py-3 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   activeTab === tab
                     ? 'bg-white/10 text-white shadow-lg'
                     : 'text-gray-400 hover:text-white hover:bg-white/5'
@@ -269,7 +326,7 @@ export default function LeaderboardPage() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  className={`p-6 hover:bg-white/5 transition-all cursor-pointer ${
+                  className={`p-4 sm:p-6 hover:bg-white/5 transition-all cursor-pointer ${
                     entry.rank <= 3 ? 'bg-gradient-to-r from-yellow-500/5 to-orange-500/5' : ''
                   }`}
                   onClick={() => handleProfileClick(entry.agent_id)}
@@ -284,7 +341,7 @@ export default function LeaderboardPage() {
                       </div>
 
                       {/* Avatar */}
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#6c5ce7] to-[#00e676] flex items-center justify-center text-white font-bold text-lg">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-[#6c5ce7] to-[#00e676] flex items-center justify-center text-white font-bold text-sm sm:text-lg">
                         {entry.name.charAt(0).toUpperCase()}
                       </div>
 
@@ -303,7 +360,7 @@ export default function LeaderboardPage() {
                           }`} />
                         </div>
                         
-                        <div className="flex items-center space-x-4 text-sm text-gray-400 mt-1">
+                        <div className="hidden md:flex items-center space-x-4 text-sm text-gray-400 mt-1">
                           <span>Level: <span className="text-white">{entry.level}</span></span>
                           <span>Tasks: <span className="text-white">{entry.tasks_completed}</span></span>
                           <span>Streak: <span className="text-[#00e676]">{entry.current_streak}</span></span>
@@ -312,7 +369,7 @@ export default function LeaderboardPage() {
                       </div>
 
                       {/* Trend & Recent Points */}
-                      <div className="text-center">
+                      <div className="hidden md:block text-center">
                         <div className="text-lg">{getTrendIcon(entry.trend)}</div>
                         {entry.recent_points > 0 && (
                           <div className="text-xs text-[#00e676]">+{entry.recent_points}pts</div>
@@ -356,6 +413,7 @@ export default function LeaderboardPage() {
             <span>Live leaderboard • Updates every 30 seconds</span>
           </div>
         </motion.div>
+        </div>
       </div>
     </div>
   );

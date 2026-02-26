@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/auth/context';
 import { createClient } from '@/lib/supabase/client';
+import { Navbar } from '@/components/Navbar';
+import { SkeletonProfileSection, SkeletonCard } from '@/components/Skeleton';
 
 interface AgentProfile {
   agent: {
@@ -142,15 +144,15 @@ function ProfileContent() {
   };
 
   const RadarChart = ({ data }: { data: AgentProfile['radar_data'] }) => {
-    const size = 250;
-    const center = size / 2;
-    const radius = 80;
+    const baseSize = 300;
+    const center = baseSize / 2;
+    const baseRadius = 90;
     const angles = [0, 60, 120, 180, 240, 300]; // 6 points
     const labels = ['Activity', 'Capability', 'Complexity', 'Memory', 'Proactivity', 'Integration'];
     const values = [data.activity, data.capability, data.complexity, data.memory, data.proactivity, data.integration];
 
     // Generate points for the radar chart
-    const generatePath = (values: number[], maxValue = 100) => {
+    const generatePath = (values: number[], maxValue = 100, radius = baseRadius) => {
       const points = angles.map((angle, i) => {
         const value = values[i] || 0;
         const normalizedValue = (value / maxValue) * radius;
@@ -163,106 +165,120 @@ function ProfileContent() {
       return `M ${points.map(p => p.join(' ')).join(' L ')} Z`;
     };
 
-    const backgroundPath = generatePath(new Array(6).fill(100));
     const dataPath = generatePath(values);
 
     return (
-      <div className="relative flex items-center justify-center p-10">
-        <svg width={size} height={size} className="overflow-visible">
-          {/* Background web */}
-          <defs>
-            <radialGradient id="radarGradient" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#6c5ce7" stopOpacity="0.1" />
-              <stop offset="100%" stopColor="#6c5ce7" stopOpacity="0.05" />
-            </radialGradient>
-          </defs>
-          
-          {/* Grid circles */}
-          {[0.2, 0.4, 0.6, 0.8, 1].map((factor, i) => (
-            <circle
-              key={i}
-              cx={center}
-              cy={center}
-              r={radius * factor}
-              fill="none"
-              stroke="rgba(255,255,255,0.1)"
-              strokeWidth="1"
-            />
-          ))}
-          
-          {/* Grid lines */}
-          {angles.map((angle, i) => {
-            const radian = (angle - 90) * (Math.PI / 180);
-            const x = center + radius * Math.cos(radian);
-            const y = center + radius * Math.sin(radian);
-            return (
-              <line
+      <div className="w-full flex items-center justify-center p-4">
+        <div className="relative w-full max-w-sm aspect-square">
+          <svg 
+            viewBox={`0 0 ${baseSize} ${baseSize}`} 
+            className="w-full h-full overflow-visible"
+          >
+            {/* Background web */}
+            <defs>
+              <radialGradient id="radarGradient" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#6c5ce7" stopOpacity="0.1" />
+                <stop offset="100%" stopColor="#6c5ce7" stopOpacity="0.05" />
+              </radialGradient>
+            </defs>
+            
+            {/* Grid circles */}
+            {[0.2, 0.4, 0.6, 0.8, 1].map((factor, i) => (
+              <circle
                 key={i}
-                x1={center}
-                y1={center}
-                x2={x}
-                y2={y}
+                cx={center}
+                cy={center}
+                r={baseRadius * factor}
+                fill="none"
                 stroke="rgba(255,255,255,0.1)"
                 strokeWidth="1"
               />
-            );
-          })}
-          
-          {/* Data area */}
-          <path
-            d={dataPath}
-            fill="url(#radarGradient)"
-            stroke="#6c5ce7"
-            strokeWidth="2"
-            strokeLinejoin="round"
-          />
-          
-          {/* Data points */}
-          {angles.map((angle, i) => {
-            const value = values[i] || 0;
-            const normalizedValue = (value / 100) * radius;
-            const radian = (angle - 90) * (Math.PI / 180);
-            const x = center + normalizedValue * Math.cos(radian);
-            const y = center + normalizedValue * Math.sin(radian);
+            ))}
             
-            return (
-              <circle
-                key={i}
-                cx={x}
-                cy={y}
-                r="4"
-                fill="#00e676"
-                stroke="#ffffff"
-                strokeWidth="2"
-              />
-            );
-          })}
-        </svg>
-        
-        {/* Labels */}
-        <div className="absolute inset-0 pointer-events-none">
-          {angles.map((angle, i) => {
-            const radian = (angle - 90) * (Math.PI / 180);
-            const labelRadius = radius + 35;
-            const x = center + labelRadius * Math.cos(radian);
-            const y = center + labelRadius * Math.sin(radian);
+            {/* Grid lines */}
+            {angles.map((angle, i) => {
+              const radian = (angle - 90) * (Math.PI / 180);
+              const x = center + baseRadius * Math.cos(radian);
+              const y = center + baseRadius * Math.sin(radian);
+              return (
+                <line
+                  key={i}
+                  x1={center}
+                  y1={center}
+                  x2={x}
+                  y2={y}
+                  stroke="rgba(255,255,255,0.1)"
+                  strokeWidth="1"
+                />
+              );
+            })}
             
-            return (
-              <div
-                key={i}
-                className="absolute transform -translate-x-1/2 -translate-y-1/2 text-xs font-medium text-gray-300 text-center"
-                style={{
-                  left: `calc(50% + ${(labelRadius * Math.cos((angle - 90) * (Math.PI / 180)))}px)`,
-                  top: `calc(50% + ${(labelRadius * Math.sin((angle - 90) * (Math.PI / 180)))}px)`,
-                  width: '80px'
-                }}
-              >
-                {labels[i]}
-                <br />
-                <span className="text-[#00e676]">{values[i]}</span>
-              </div>
-            );
-          })}
+            {/* Data area */}
+            <path
+              d={dataPath}
+              fill="url(#radarGradient)"
+              stroke="#6c5ce7"
+              strokeWidth="2"
+              strokeLinejoin="round"
+            />
+            
+            {/* Data points */}
+            {angles.map((angle, i) => {
+              const value = values[i] || 0;
+              const normalizedValue = (value / 100) * baseRadius;
+              const radian = (angle - 90) * (Math.PI / 180);
+              const x = center + normalizedValue * Math.cos(radian);
+              const y = center + normalizedValue * Math.sin(radian);
+              
+              return (
+                <circle
+                  key={i}
+                  cx={x}
+                  cy={y}
+                  r="4"
+                  fill="#00e676"
+                  stroke="#ffffff"
+                  strokeWidth="2"
+                />
+              );
+            })}
+
+            {/* SVG Labels */}
+            {angles.map((angle, i) => {
+              const radian = (angle - 90) * (Math.PI / 180);
+              const labelRadius = baseRadius + 40;
+              const x = center + labelRadius * Math.cos(radian);
+              const y = center + labelRadius * Math.sin(radian);
+              
+              // Adjust text anchor based on position
+              let textAnchor: 'start' | 'middle' | 'end' = 'middle';
+              if (angle > 30 && angle < 150) textAnchor = 'start';
+              else if (angle > 210 && angle < 330) textAnchor = 'end';
+              
+              return (
+                <g key={i}>
+                  <text
+                    x={x}
+                    y={y - 5}
+                    textAnchor={textAnchor}
+                    className="fill-gray-300 text-xs font-medium"
+                    dominantBaseline="middle"
+                  >
+                    {labels[i]}
+                  </text>
+                  <text
+                    x={x}
+                    y={y + 10}
+                    textAnchor={textAnchor}
+                    className="fill-green-400 text-sm font-bold"
+                    dominantBaseline="middle"
+                  >
+                    {values[i]}
+                  </text>
+                </g>
+              );
+            })}
+          </svg>
         </div>
       </div>
     );
@@ -314,8 +330,46 @@ function ProfileContent() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#1a1a2e] to-[#16213e] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6c5ce7]"></div>
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#1a1a2e] to-[#16213e]">
+        <Navbar />
+        
+        <div className="pt-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {/* Agent Header Skeleton */}
+            <SkeletonCard className="mb-8">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-6">
+                  <div className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-xl w-16 h-16"></div>
+                  <div>
+                    <div className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-lg h-8 w-48 mb-2"></div>
+                    <div className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-lg h-4 w-32"></div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-lg h-10 w-20 mb-2"></div>
+                  <div className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-full h-6 w-16"></div>
+                </div>
+              </div>
+            </SkeletonCard>
+
+            {/* Tab Navigation Skeleton */}
+            <div className="mb-8">
+              <div className="flex space-x-1 bg-white/5 p-1 rounded-xl w-fit">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-lg h-12 w-24"></div>
+                ))}
+              </div>
+            </div>
+
+            {/* Content Grid Skeleton */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <SkeletonProfileSection />
+              <SkeletonProfileSection />
+              <SkeletonProfileSection />
+              <SkeletonProfileSection />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -326,41 +380,10 @@ function ProfileContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#1a1a2e] to-[#16213e]">
-      {/* Header */}
-      <div className="border-b border-white/10 bg-black/20 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              <span>Back to Dashboard</span>
-            </button>
-            
-            <div className="flex items-center space-x-4">
-              <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                agentData.status === 'online' 
-                  ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                  : 'bg-red-500/20 text-red-400 border border-red-500/30'
-              }`}>
-                {agentData.status === 'online' ? '🟢 Online' : '🔴 Offline'}
-              </div>
-              
-              <button
-                onClick={() => router.push('/leaderboard')}
-                className="px-4 py-2 bg-gradient-to-r from-[#6c5ce7] to-[#00e676] text-white rounded-lg transition-all hover:scale-105"
-              >
-                View Leaderboard
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Navbar />
+      
+      <div className="pt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Agent Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -471,6 +494,31 @@ function ProfileContent() {
                     <div className="text-2xl font-bold text-[#00e676]">{stats.uptime_percentage}%</div>
                     <div className="text-gray-300 text-sm">Uptime</div>
                   </div>
+                </div>
+              </div>
+
+              {/* Money Acquired - Coming Soon */}
+              <div className="bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-xl rounded-2xl border border-white/10 p-6 opacity-75">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-semibold text-white flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-black" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 2L3 7v11a2 2 0 002 2h10a2 2 0 002-2V7l-7-5zM10 12a3 3 0 100-6 3 3 0 000 6z"/>
+                      </svg>
+                    </div>
+                    Revenue Tracking
+                  </h3>
+                  <div className="w-6 h-6 text-gray-400">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="text-center py-4">
+                  <div className="text-3xl font-bold text-gray-400 mb-2">Coming Soon</div>
+                  <p className="text-gray-400 text-sm leading-relaxed">
+                    Track the real monetary value your agent generates. Verified stats only.
+                  </p>
                 </div>
               </div>
 
@@ -674,6 +722,7 @@ function ProfileContent() {
             )}
           </motion.div>
         )}
+        </div>
       </div>
     </div>
   );

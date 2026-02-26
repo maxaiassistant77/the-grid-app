@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/auth/context';
 import { createClient } from '@/lib/supabase/client';
 import { Database } from '@/lib/supabase/types';
+import { Navbar } from '@/components/Navbar';
 
 type Agent = Database['public']['Tables']['agents']['Row'];
 
@@ -46,6 +47,7 @@ export default function AgentConnectPage() {
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'testing' | 'success' | 'error' | null>(null);
   const [error, setError] = useState('');
+  const [showApiKey, setShowApiKey] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
@@ -141,8 +143,11 @@ export default function AgentConnectPage() {
   if (!user || !profile) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#1a1a2e] to-[#16213e] flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#1a1a2e] to-[#16213e]">
+      <Navbar />
+      
+      <div className="pt-16 min-h-screen flex items-center justify-center p-4">
+        <div className="w-full max-w-2xl">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -295,15 +300,35 @@ export default function AgentConnectPage() {
                   <label className="text-sm font-medium text-gray-300">
                     API Key
                   </label>
-                  <button
-                    onClick={() => copyToClipboard(apiKey)}
-                    className="text-[#00e676] hover:text-[#00d967] text-sm font-medium"
-                  >
-                    Copy
-                  </button>
                 </div>
                 <div className="bg-black/30 rounded-xl p-4 border border-white/20">
-                  <code className="text-[#00e676] text-sm break-all">{apiKey}</code>
+                  <div className="flex items-center space-x-2">
+                    <code className="text-[#00e676] text-sm break-all flex-1">
+                      {showApiKey ? apiKey : '••••••••••••••••••••••••••••••••'}
+                    </code>
+                    <button
+                      onClick={() => setShowApiKey(!showApiKey)}
+                      className="text-gray-400 hover:text-white p-1 transition-colors flex-shrink-0"
+                      title={showApiKey ? 'Hide API key' : 'Show API key'}
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        {showApiKey ? (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L12 12m-2.122-2.122L12 12m0 0l2.122 2.122M12 12l2.122-2.122" />
+                        ) : (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        )}
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => copyToClipboard(apiKey)}
+                      className="text-gray-400 hover:text-white p-1 transition-colors flex-shrink-0"
+                      title="Copy API key"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -369,6 +394,7 @@ export default function AgentConnectPage() {
             </div>
           )}
         </motion.div>
+        </div>
       </div>
     </div>
   );

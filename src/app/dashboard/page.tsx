@@ -5,12 +5,26 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/auth/context';
 import { createClient } from '@/lib/supabase/client';
+import { Navbar } from '@/components/Navbar';
+import { SkeletonStatCard, SkeletonCard } from '@/components/Skeleton';
 
 export default function DashboardPage() {
   const { user, profile, agent, loading } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showApiKey, setShowApiKey] = useState(false);
+
+  const copyApiKey = async () => {
+    if (agent?.api_key) {
+      try {
+        await navigator.clipboard.writeText(agent.api_key);
+        // Could add a toast notification here
+      } catch (err) {
+        console.error('Failed to copy API key:', err);
+      }
+    }
+  };
 
   useEffect(() => {
     if (!loading) {
@@ -50,8 +64,56 @@ export default function DashboardPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#1a1a2e] to-[#16213e] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6c5ce7]"></div>
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#1a1a2e] to-[#16213e]">
+        <Navbar />
+        
+        <div className="pt-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {/* Welcome Header Skeleton */}
+            <div className="mb-8">
+              <div className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-lg h-8 w-64 mb-2"></div>
+              <div className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-lg h-4 w-48"></div>
+            </div>
+
+            {/* Agent Status Card Skeleton */}
+            <SkeletonCard className="mb-8">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-lg h-8 w-48 mb-2"></div>
+                  <div className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-lg h-4 w-64 mb-1"></div>
+                  <div className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-lg h-4 w-32"></div>
+                </div>
+                <div className="text-right">
+                  <div className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-lg h-12 w-20 mb-2"></div>
+                  <div className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-full h-6 w-16"></div>
+                </div>
+              </div>
+            </SkeletonCard>
+
+            {/* Quick Stats Grid Skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <SkeletonStatCard />
+              <SkeletonStatCard />
+              <SkeletonStatCard />
+              <SkeletonStatCard />
+            </div>
+
+            {/* Coming Soon Sections Skeleton */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <SkeletonCard>
+                <div className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-lg h-6 w-32 mb-4"></div>
+                <div className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-lg h-4 w-full mb-4"></div>
+                <div className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-lg h-10 w-32"></div>
+              </SkeletonCard>
+              
+              <SkeletonCard>
+                <div className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-lg h-6 w-24 mb-4"></div>
+                <div className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-lg h-4 w-full mb-4"></div>
+                <div className="bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse rounded-lg h-10 w-32"></div>
+              </SkeletonCard>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -62,41 +124,19 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#1a1a2e] to-[#16213e]">
-      {/* Header */}
-      <div className="border-b border-white/10 bg-black/20 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-xl font-semibold text-white">
-                Hey, {profile.name} 👋
-              </h1>
-              <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                agent.status === 'connected' 
-                  ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                  : 'bg-red-500/20 text-red-400 border border-red-500/30'
-              }`}>
-                {agent.status === 'connected' ? '🟢 Online' : '🔴 Offline'}
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push('/profile')}
-                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
-              >
-                Profile
-              </button>
-              <button
-                onClick={() => router.push('/leaderboard')}
-                className="px-4 py-2 bg-gradient-to-r from-[#6c5ce7] to-[#00e676] text-white rounded-lg transition-all hover:scale-105"
-              >
-                Leaderboard
-              </button>
-            </div>
+      <Navbar />
+      
+      <div className="pt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Welcome Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-white mb-2">
+              Hey, {profile.name} 👋
+            </h1>
+            <p className="text-gray-300">
+              Welcome to your AI agent dashboard
+            </p>
           </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Agent Status Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -265,10 +305,40 @@ export default function DashboardPage() {
               </code>
             </div>
           </div>
-          <p className="text-gray-400 text-sm mt-4">
-            Use Bearer authentication with your API key: <code className="text-[#00e676]">{agent.api_key}</code>
-          </p>
+          <div className="mt-4">
+            <p className="text-gray-400 text-sm mb-2">
+              Use Bearer authentication with your API key:
+            </p>
+            <div className="flex items-center space-x-2 bg-black/30 p-3 rounded-lg">
+              <code className="text-[#00e676] flex-1 text-sm">
+                {showApiKey ? agent.api_key : '••••••••••••••••••••••••••••••••'}
+              </code>
+              <button
+                onClick={() => setShowApiKey(!showApiKey)}
+                className="text-gray-400 hover:text-white p-1 transition-colors"
+                title={showApiKey ? 'Hide API key' : 'Show API key'}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {showApiKey ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L12 12m-2.122-2.122L12 12m0 0l2.122 2.122M12 12l2.122-2.122" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  )}
+                </svg>
+              </button>
+              <button
+                onClick={copyApiKey}
+                className="text-gray-400 hover:text-white p-1 transition-colors"
+                title="Copy API key"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </button>
+            </div>
+          </div>
         </motion.div>
+        </div>
       </div>
     </div>
   );
