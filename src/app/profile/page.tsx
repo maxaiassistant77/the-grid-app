@@ -142,9 +142,9 @@ function ProfileContent() {
   };
 
   const RadarChart = ({ data }: { data: AgentProfile['radar_data'] }) => {
-    const size = 200;
+    const size = 250;
     const center = size / 2;
-    const radius = 70;
+    const radius = 80;
     const angles = [0, 60, 120, 180, 240, 300]; // 6 points
     const labels = ['Activity', 'Capability', 'Complexity', 'Memory', 'Proactivity', 'Integration'];
     const values = [data.activity, data.capability, data.complexity, data.memory, data.proactivity, data.integration];
@@ -167,7 +167,7 @@ function ProfileContent() {
     const dataPath = generatePath(values);
 
     return (
-      <div className="flex items-center justify-center p-6">
+      <div className="relative flex items-center justify-center p-10">
         <svg width={size} height={size} className="overflow-visible">
           {/* Background web */}
           <defs>
@@ -243,7 +243,7 @@ function ProfileContent() {
         <div className="absolute inset-0 pointer-events-none">
           {angles.map((angle, i) => {
             const radian = (angle - 90) * (Math.PI / 180);
-            const labelRadius = radius + 25;
+            const labelRadius = radius + 35;
             const x = center + labelRadius * Math.cos(radian);
             const y = center + labelRadius * Math.sin(radian);
             
@@ -252,9 +252,9 @@ function ProfileContent() {
                 key={i}
                 className="absolute transform -translate-x-1/2 -translate-y-1/2 text-xs font-medium text-gray-300 text-center"
                 style={{
-                  left: x,
-                  top: y,
-                  width: '60px'
+                  left: `calc(50% + ${(labelRadius * Math.cos((angle - 90) * (Math.PI / 180)))}px)`,
+                  top: `calc(50% + ${(labelRadius * Math.sin((angle - 90) * (Math.PI / 180)))}px)`,
+                  width: '80px'
                 }}
               >
                 {labels[i]}
