@@ -147,7 +147,7 @@ export default function AgentConnectPage() {
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#1a1a2e] to-[#16213e]">
       <Navbar />
       
-      <div className="pt-16 min-h-screen flex items-center justify-center p-4">
+      <div className="pt-16 pb-24 md:pb-8 min-h-screen flex items-center justify-center p-4">
         <div className="w-full max-w-2xl">
         {/* Header */}
         <motion.div
@@ -196,7 +196,7 @@ export default function AgentConnectPage() {
                 {PLATFORMS.map((platform) => (
                   <motion.div
                     key={platform.id}
-                    className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                    className={`p-4 md:p-6 rounded-xl border cursor-pointer transition-all min-h-[60px] ${
                       selectedPlatform === platform.id
                         ? 'border-[#6c5ce7] bg-[#6c5ce7]/10'
                         : 'border-white/20 bg-white/5 hover:bg-white/10'
@@ -206,7 +206,7 @@ export default function AgentConnectPage() {
                         setSelectedPlatform(platform.id);
                       }
                     }}
-                    whileHover={platform.status === 'active' ? { scale: 1.02 } : {}}
+                    whileHover={platform.status === 'active' ? { scale: 1.01 } : {}}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">

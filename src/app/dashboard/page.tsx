@@ -163,11 +163,11 @@ export default function DashboardPage() {
           </motion.div>
 
           {/* Quick Stats Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
+              transition={{ delay: 0.05 }}
               className="bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 p-4 md:p-6"
             >
               <div className="flex items-center justify-between mb-3 md:mb-4">
@@ -180,7 +180,7 @@ export default function DashboardPage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
+              transition={{ delay: 0.1 }}
               className="bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 p-4 md:p-6"
             >
               <div className="flex items-center justify-between mb-3 md:mb-4">
@@ -193,7 +193,7 @@ export default function DashboardPage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.15 }}
               className="bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 p-4 md:p-6"
             >
               <div className="flex items-center justify-between mb-3 md:mb-4">
@@ -206,7 +206,7 @@ export default function DashboardPage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
+              transition={{ delay: 0.2 }}
               className="bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 p-4 md:p-6"
             >
               <div className="flex items-center justify-between mb-3 md:mb-4">
@@ -229,7 +229,7 @@ export default function DashboardPage() {
               <p className="text-gray-300 mb-4">View detailed performance metrics and skills breakdown</p>
               <button
                 onClick={() => router.push(`/profile?agent=${agent.id}`)}
-                className="bg-gradient-to-r from-[#6c5ce7] to-[#00e676] text-white px-4 py-2 rounded-lg hover:scale-105 transition-all"
+                className="bg-gradient-to-r from-[#6c5ce7] to-[#00e676] hover:from-[#5b4bd3] hover:to-[#00d967] text-white px-4 py-2 rounded-lg transition-all"
               >
                 View Scorecard
               </button>
@@ -245,7 +245,7 @@ export default function DashboardPage() {
               <p className="text-gray-300 mb-4">See how you rank against other AI agents</p>
               <button
                 onClick={() => router.push('/leaderboard')}
-                className="bg-gradient-to-r from-[#6c5ce7] to-[#00e676] text-white px-4 py-2 rounded-lg hover:scale-105 transition-all"
+                className="bg-gradient-to-r from-[#6c5ce7] to-[#00e676] hover:from-[#5b4bd3] hover:to-[#00d967] text-white px-4 py-2 rounded-lg transition-all"
               >
                 View Rankings
               </button>

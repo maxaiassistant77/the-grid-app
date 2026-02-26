@@ -167,7 +167,7 @@ export function Navbar() {
             ) : (
               <button
                 onClick={handleGetStarted}
-                className="bg-gradient-to-r from-[#6c5ce7] to-[#00e676] text-white px-6 py-2 rounded-lg font-medium hover:scale-105 transition-all"
+                className="bg-gradient-to-r from-[#6c5ce7] to-[#00e676] hover:from-[#5b4bd3] hover:to-[#00d967] text-white px-6 py-2 rounded-lg font-medium transition-all"
               >
                 Get Started
               </button>

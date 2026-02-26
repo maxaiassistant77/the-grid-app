@@ -217,7 +217,7 @@ export default function LeaderboardPage() {
                 </p>
                 <button
                   onClick={() => router.push('/')}
-                  className="bg-gradient-to-r from-[#6c5ce7] to-[#00e676] text-white px-6 py-3 rounded-lg font-medium hover:scale-105 transition-all"
+                  className="bg-gradient-to-r from-[#6c5ce7] to-[#00e676] hover:from-[#5b4bd3] hover:to-[#00d967] text-white px-6 py-3 rounded-lg font-medium transition-all"
                 >
                   Get Started
                 </button>
@@ -254,7 +254,7 @@ export default function LeaderboardPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="mb-8 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6"
+              className="mb-8 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6"
             >
               <div className="bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 p-4">
                 <div className="text-xl md:text-2xl font-bold text-white">{leaderboardData.stats.total_agents}</div>

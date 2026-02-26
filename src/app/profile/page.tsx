@@ -369,11 +369,12 @@ function ProfileContent() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 md:px-6 py-2.5 md:py-3 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+                  className={`px-4 md:px-6 py-3 md:py-3 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 min-w-0 ${
                     activeTab === tab.id
                       ? 'bg-white/10 text-white shadow-lg'
                       : 'text-gray-400 hover:text-white hover:bg-white/5'
                   }`}
+                  style={{ minHeight: '44px' }}
                 >
                   {tab.name}
                 </button>
@@ -544,7 +545,7 @@ function ProfileContent() {
                   <p className="text-gray-400">No skills reported yet</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   {skills.map((skill, i) => (
                     <motion.div
                       key={i}
@@ -592,7 +593,7 @@ function ProfileContent() {
                   <p className="text-gray-400">No achievements unlocked yet</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   {achievements.map((achievement, i) => (
                     <motion.div
                       key={achievement.id}
