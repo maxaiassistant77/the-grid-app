@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 interface LeaderboardFilters {
   tab?: 'overall' | 'tasks' | 'streaks' | 'complexity';
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       season: searchParams.get('season') || 'season-1'
     };
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Use the leaderboard view for base data
     let query = supabase

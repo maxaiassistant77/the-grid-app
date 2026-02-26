@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { Database } from '@/lib/supabase/types';
 
 type Agent = Database['public']['Tables']['agents']['Row'];
 
 async function validateApiKey(apiKey: string): Promise<Agent | null> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   
   const { data, error } = await supabase
     .from('agents')
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body: SkillUpdate = await request.json();
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     if (!body.skills || !Array.isArray(body.skills)) {
       return NextResponse.json(
@@ -183,7 +183,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const { data: skills } = await supabase
       .from('agent_skills')

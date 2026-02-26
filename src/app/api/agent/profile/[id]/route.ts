@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export async function GET(
   request: NextRequest,
@@ -7,7 +7,7 @@ export async function GET(
 ) {
   try {
     const { id: agentId } = await params;
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Get agent with user profile
     const { data: agent, error: agentError } = await supabase

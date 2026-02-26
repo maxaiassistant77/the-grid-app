@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { Database } from '@/lib/supabase/types';
 
 type Agent = Database['public']['Tables']['agents']['Row'];
 
 async function validateApiKey(apiKey: string): Promise<Agent | null> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   
   const { data, error } = await supabase
     .from('agents')
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { metadata = {} } = body;
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Update agent last_seen_at and status
     const { error: updateError } = await supabase
