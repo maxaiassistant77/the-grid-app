@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/auth/context';
@@ -96,7 +96,7 @@ const COMPLEXITY_COLORS = {
   epic: '#ffd93d'
 };
 
-export default function ProfilePage() {
+function ProfileContent() {
   const { user, agent, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -676,5 +676,13 @@ export default function ProfilePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center"><div className="text-white text-lg">Loading...</div></div>}>
+      <ProfileContent />
+    </Suspense>
   );
 }
