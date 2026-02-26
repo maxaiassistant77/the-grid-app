@@ -1,14 +1,39 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/auth/context';
 import { createClient } from '@/lib/supabase/client';
 import { LayoutDashboard, Trophy, User, LogOut, Settings, ChevronDown } from 'lucide-react';
+import { ScorePill } from './ScorePill';
 
 export function Navbar() {
   const { user, profile, agent } = useAuth();
+  const [agentScore, setAgentScore] = useState(0);
+  const [agentLevel, setAgentLevel] = useState('Apprentice');
+
+  useEffect(() => {
+    if (!agent) return;
+    const supabase = createClient();
+    supabase
+      .from('agent_stats')
+      .select('total_score')
+      .eq('agent_id', agent.id)
+      .single()
+      .then(({ data }: { data: any }) => {
+        if (data) {
+          const score = data.total_score || 0;
+          setAgentScore(score);
+          setAgentLevel(
+            score >= 5000 ? 'Legend' :
+            score >= 2500 ? 'Architect' :
+            score >= 1000 ? 'Creator' :
+            score >= 500 ? 'Builder' : 'Apprentice'
+          );
+        }
+      });
+  }, [agent]);
   const router = useRouter();
   const pathname = usePathname();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -65,9 +90,12 @@ export function Navbar() {
           </div>
 
           {/* User Menu / Get Started */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             {user ? (
               <>
+                {/* Score Pill */}
+                {agent && <ScorePill score={agentScore} level={agentLevel} />}
+
                 {/* Agent Status - desktop only */}
                 {agent && (
                   <div className={`hidden md:flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-medium ${

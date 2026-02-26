@@ -8,6 +8,9 @@ import { createClient } from '@/lib/supabase/client';
 import { Navbar } from '@/components/Navbar';
 import { SkeletonProfileSection, SkeletonCard } from '@/components/Skeleton';
 import { Brain, Plug, BookOpen, Trophy, BarChart3, Lock, Settings } from 'lucide-react';
+import { ShareableCard } from '@/components/ShareableCard';
+import { ScoreEducation } from '@/components/ScoreEducation';
+import { AchievementBadge } from '@/components/AchievementBadge';
 
 interface AgentProfile {
   agent: {
@@ -387,7 +390,19 @@ function ProfileContent() {
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-4 md:p-6"
               >
-                <h3 className="text-xl font-semibold text-white mb-4">Performance Radar</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-semibold text-white">Performance Radar</h3>
+                  <div className="flex items-center space-x-2">
+                    <ScoreEducation />
+                    <ShareableCard
+                      agentName={agentData.name}
+                      ownerName={profile.name}
+                      level={stats.level}
+                      totalScore={stats.total_score}
+                      radarData={radar_data}
+                    />
+                  </div>
+                </div>
                 <RadarChart data={radar_data} />
               </motion.div>
 
@@ -587,7 +602,9 @@ function ProfileContent() {
                       className="p-4 rounded-xl bg-gradient-to-r from-[#6c5ce7]/10 to-[#00e676]/10 border border-[#6c5ce7]/20"
                     >
                       <div className="text-center">
-                        <div className="text-3xl mb-2">{achievement.icon}</div>
+                        <div className="flex justify-center mb-2">
+                          <AchievementBadge achievementId={achievement.id} points={50} size={64} />
+                        </div>
                         <h4 className="font-semibold text-white mb-1">{achievement.name}</h4>
                         <p className="text-sm text-gray-300 mb-2">{achievement.description}</p>
                         <p className="text-xs text-gray-400">

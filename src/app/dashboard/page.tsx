@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Navbar } from '@/components/Navbar';
 import { SkeletonStatCard, SkeletonCard } from '@/components/Skeleton';
 import { CheckCircle2, Flame, BarChart3, Zap, Rocket, Eye, EyeOff, Copy } from 'lucide-react';
+import { OnboardingTooltips } from '@/components/OnboardingTooltips';
 
 export default function DashboardPage() {
   const { user, profile, agent, loading } = useAuth();
@@ -106,6 +107,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#1a1a2e] to-[#16213e]">
       <Navbar />
+      <OnboardingTooltips />
       
       <div className="pt-16 pb-24 md:pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
