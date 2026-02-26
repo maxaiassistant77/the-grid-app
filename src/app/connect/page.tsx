@@ -2,53 +2,67 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/auth/context';
 import { createClient } from '@/lib/supabase/client';
 import { Database } from '@/lib/supabase/types';
 import { Navbar } from '@/components/Navbar';
-import { Bot, Brain, Settings, Eye, EyeOff, Copy } from 'lucide-react';
+import { 
+  Bot, 
+  Copy, 
+  Check, 
+  Eye, 
+  EyeOff, 
+  ChevronDown, 
+  ChevronUp,
+  Zap,
+  Settings,
+  Terminal,
+  Cpu,
+  Brain,
+  Link
+} from 'lucide-react';
 
 type Agent = Database['public']['Tables']['agents']['Row'];
 
-const PLATFORMS = [
+const TABS = [
   {
     id: 'openclaw',
     name: 'OpenClaw',
-    description: 'The ultimate AI assistant platform',
-    Icon: Bot,
-    status: 'active',
-    setupInstructions: 'Add the API key to your OpenClaw agent configuration'
+    icon: Bot,
+    configFile: 'openclaw.json'
   },
   {
-    id: 'claude_cowork',
-    name: 'Claude Cowork',
-    description: 'Coming soon - AI collaboration platform',
-    Icon: Brain,
-    status: 'coming-soon'
+    id: 'claude-desktop',
+    name: 'Claude Desktop', 
+    icon: Brain,
+    configFile: 'claude_desktop_config.json'
   },
   {
-    id: 'custom',
-    name: 'Custom Agent',
-    description: 'Connect your own AI agent',
-    Icon: Settings,
-    status: 'active',
-    setupInstructions: 'Use our API endpoints to report agent activity'
+    id: 'cursor',
+    name: 'Cursor',
+    icon: Cpu,
+    configFile: 'MCP config'
+  },
+  {
+    id: 'other',
+    name: 'Other',
+    icon: Terminal,
+    configFile: 'MCP config'
   }
 ];
 
 export default function AgentConnectPage() {
   const { user, profile, agent, loading, refreshAgent } = useAuth();
   const router = useRouter();
-  const [step, setStep] = useState(1);
-  const [selectedPlatform, setSelectedPlatform] = useState('openclaw');
   const [agentName, setAgentName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [apiKey, setApiKey] = useState('');
-  const [isTestingConnection, setIsTestingConnection] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'testing' | 'success' | 'error' | null>(null);
   const [error, setError] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
+  const [activeTab, setActiveTab] = useState('openclaw');
+  const [copiedStates, setCopiedStates] = useState<{[key: string]: boolean}>({});
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
@@ -85,7 +99,7 @@ export default function AgentConnectPage() {
           user_id: user.id,
           name: agentName.trim(),
           api_key: keyData,
-          platform: selectedPlatform
+          platform: 'mcp'
         })
         .select()
         .single();
@@ -94,7 +108,6 @@ export default function AgentConnectPage() {
 
       setApiKey(keyData);
       await refreshAgent();
-      setStep(3);
     } catch (err: any) {
       setError(err.message || 'Failed to create agent');
     } finally {
@@ -102,35 +115,62 @@ export default function AgentConnectPage() {
     }
   };
 
-  const handleTestConnection = async () => {
-    setIsTestingConnection(true);
-    setConnectionStatus('testing');
-
-    // Simulate connection test (in reality, this would ping the agent)
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // For demo purposes, randomly succeed or fail
-    const success = Math.random() > 0.3;
-    setConnectionStatus(success ? 'success' : 'error');
-    setIsTestingConnection(false);
-
-    if (success) {
-      // Update agent status to connected
-      await supabase
-        .from('agents')
-        // @ts-ignore - Supabase type inference issue
-        .update({ 
-          status: 'connected',
-          last_seen_at: new Date().toISOString()
-        })
-        .eq('api_key', apiKey);
-
-      await refreshAgent();
-    }
+  const copyToClipboard = async (text: string, key: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedStates(prev => ({ ...prev, [key]: true }));
+    setTimeout(() => {
+      setCopiedStates(prev => ({ ...prev, [key]: false }));
+    }, 2000);
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+  const getConfigSnippet = (tabId: string, apiKey: string) => {
+    const configs = {
+      'openclaw': `{
+  "mcpServers": {
+    "the-grid": {
+      "command": "npx",
+      "args": ["-y", "@the-grid/mcp-server"],
+      "env": {
+        "GRID_API_KEY": "${apiKey}"
+      }
+    }
+  }
+}`,
+      'claude-desktop': `{
+  "mcpServers": {
+    "the-grid": {
+      "command": "npx",
+      "args": ["-y", "@the-grid/mcp-server"],
+      "env": {
+        "GRID_API_KEY": "${apiKey}"
+      }
+    }
+  }
+}`,
+      'cursor': `{
+  "mcpServers": {
+    "the-grid": {
+      "command": "npx",
+      "args": ["-y", "@the-grid/mcp-server"],
+      "env": {
+        "GRID_API_KEY": "${apiKey}"
+      }
+    }
+  }
+}`,
+      'other': `{
+  "mcpServers": {
+    "the-grid": {
+      "command": "npx",
+      "args": ["-y", "@the-grid/mcp-server"],
+      "env": {
+        "GRID_API_KEY": "${apiKey}"
+      }
+    }
+  }
+}`
+    };
+    return configs[tabId as keyof typeof configs] || configs.other;
   };
 
   if (loading) {
@@ -148,112 +188,39 @@ export default function AgentConnectPage() {
       <Navbar />
       
       <div className="pt-16 pb-24 md:pb-8 min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-2xl">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
-        >
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-            Connect Your <span className="bg-gradient-to-r from-[#6c5ce7] to-[#00e676] bg-clip-text text-transparent">AI Agent</span>
-          </h1>
-          <p className="text-gray-300">
-            Set up your agent to start tracking performance and climbing the leaderboard
-          </p>
-        </motion.div>
+        <div className="w-full max-w-4xl">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center mb-12"
+          >
+            <h1 className="text-3xl md:text-5xl font-bold text-white mb-4">
+              Connect Your <span className="bg-gradient-to-r from-[#6c5ce7] to-[#00e676] bg-clip-text text-transparent">AI Agent</span>
+            </h1>
+            <p className="text-gray-300 text-lg max-w-2xl mx-auto">
+              Join The Grid leaderboard and track your agent's performance across tasks, skills, and achievements
+            </p>
+          </motion.div>
 
-        {/* Progress Steps */}
-        <div className="flex items-center justify-center mb-8 space-x-4">
-          {[1, 2, 3].map((s) => (
-            <div key={s} className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
-                s <= step ? 'bg-[#6c5ce7] text-white' : 'bg-white/10 text-gray-400'
-              }`}>
-                {s}
-              </div>
-              {s < 3 && (
-                <div className={`w-12 h-1 mx-2 rounded transition-colors ${
-                  s < step ? 'bg-[#6c5ce7]' : 'bg-white/10'
-                }`} />
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Step Content */}
-        <motion.div
-          key={step}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.3 }}
-          className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-8 shadow-2xl"
-        >
-          {step === 1 && (
-            <div>
-              <h2 className="text-xl font-semibold text-white mb-6">Choose Your Platform</h2>
-              <div className="space-y-4">
-                {PLATFORMS.map((platform) => (
-                  <motion.div
-                    key={platform.id}
-                    className={`p-4 md:p-6 rounded-xl border cursor-pointer transition-all min-h-[60px] ${
-                      selectedPlatform === platform.id
-                        ? 'border-[#6c5ce7] bg-[#6c5ce7]/10'
-                        : 'border-white/20 bg-white/5 hover:bg-white/10'
-                    } ${platform.status === 'coming-soon' ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    onClick={() => {
-                      if (platform.status === 'active') {
-                        setSelectedPlatform(platform.id);
-                      }
-                    }}
-                    whileHover={platform.status === 'active' ? { scale: 1.01 } : {}}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <platform.Icon size={24} className="text-gray-300" />
-                        <div>
-                          <h3 className="text-white font-medium">{platform.name}</h3>
-                          <p className="text-gray-400 text-sm">{platform.description}</p>
-                        </div>
-                      </div>
-                      {platform.status === 'coming-soon' && (
-                        <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs rounded-full">
-                          Coming Soon
-                        </span>
-                      )}
-                      {selectedPlatform === platform.id && platform.status === 'active' && (
-                        <div className="w-5 h-5 bg-[#6c5ce7] rounded-full flex items-center justify-center">
-                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-              <button
-                onClick={() => setStep(2)}
-                disabled={!selectedPlatform || PLATFORMS.find(p => p.id === selectedPlatform)?.status !== 'active'}
-                className="w-full mt-6 bg-gradient-to-r from-[#6c5ce7] to-[#00e676] hover:from-[#5b4bd3] hover:to-[#00d967] text-white font-semibold py-3 px-6 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Continue
-              </button>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div>
-              <h2 className="text-xl font-semibold text-white mb-6">Name Your Agent</h2>
+          {/* Agent Name Input */}
+          {!apiKey && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-8 shadow-2xl mb-8"
+            >
+              <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+                <Bot className="text-[#6c5ce7]" size={24} />
+                Name Your Agent
+              </h2>
+              
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Agent Name
-                </label>
                 <input
                   type="text"
                   value={agentName}
                   onChange={(e) => setAgentName(e.target.value)}
-                  placeholder="e.g., TaskMaster 3000"
+                  placeholder="e.g., TaskMaster 3000, Claude Assistant, My AI Helper"
                   className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:border-[#6c5ce7] focus:ring-2 focus:ring-[#6c5ce7]/20 outline-none transition-all text-white placeholder:text-gray-400"
                 />
               </div>
@@ -264,129 +231,265 @@ export default function AgentConnectPage() {
                 </div>
               )}
 
-              <div className="flex space-x-4">
-                <button
-                  onClick={() => setStep(1)}
-                  className="flex-1 bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-6 rounded-xl transition-all"
-                >
-                  Back
-                </button>
-                <button
-                  onClick={handleCreateAgent}
-                  disabled={!agentName.trim() || isCreating}
-                  className="flex-1 bg-gradient-to-r from-[#6c5ce7] to-[#00e676] hover:from-[#5b4bd3] hover:to-[#00d967] text-white font-semibold py-3 px-6 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isCreating ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
-                      Creating...
-                    </span>
-                  ) : (
-                    'Create Agent'
-                  )}
-                </button>
-              </div>
-            </div>
+              <button
+                onClick={handleCreateAgent}
+                disabled={!agentName.trim() || isCreating}
+                className="w-full bg-gradient-to-r from-[#6c5ce7] to-[#00e676] hover:from-[#5b4bd3] hover:to-[#00d967] text-white font-semibold py-3 px-6 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isCreating ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    Creating Agent...
+                  </span>
+                ) : (
+                  'Create Agent & Get API Key'
+                )}
+              </button>
+            </motion.div>
           )}
 
-          {step === 3 && (
-            <div>
-              <h2 className="text-xl font-semibold text-white mb-6">Connect Your Agent</h2>
-              
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-gray-300">
-                    API Key
-                  </label>
+          {/* MCP Setup - Primary Method */}
+          {apiKey && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-8"
+            >
+              {/* Primary Section - MCP */}
+              <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-8 shadow-2xl">
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center gap-3 px-4 py-2 bg-[#00e676]/20 border border-[#00e676]/30 rounded-full mb-4">
+                    <Zap className="text-[#00e676]" size={20} />
+                    <span className="text-[#00e676] font-medium">Recommended</span>
+                  </div>
+                  <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                    Connect via MCP
+                  </h2>
+                  <p className="text-lg text-gray-300">
+                    The easiest way to connect — just 3 simple steps
+                  </p>
                 </div>
-                <div className="bg-black/30 rounded-xl p-4 border border-white/20">
-                  <div className="flex items-center space-x-2">
-                    <code className="text-[#00e676] text-sm break-all flex-1">
-                      {showApiKey ? apiKey : '••••••••••••••••••••••••••••••••'}
-                    </code>
-                    <button
-                      onClick={() => setShowApiKey(!showApiKey)}
-                      className="text-gray-400 hover:text-white p-1 transition-colors flex-shrink-0"
-                      title={showApiKey ? 'Hide API key' : 'Show API key'}
-                    >
-                      {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                    <button
-                      onClick={() => copyToClipboard(apiKey)}
-                      className="text-gray-400 hover:text-white p-1 transition-colors flex-shrink-0"
-                      title="Copy API key"
-                    >
-                      <Copy size={16} />
-                    </button>
+
+                {/* Step 1 - API Key */}
+                <div className="mb-8">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 bg-[#6c5ce7] rounded-full flex items-center justify-center text-white font-bold">
+                      1
+                    </div>
+                    <h3 className="text-xl font-semibold text-white">Copy your API key</h3>
+                  </div>
+                  
+                  <div className="bg-black/30 rounded-xl p-4 border border-white/20">
+                    <div className="flex items-center justify-between gap-3">
+                      <code className="text-[#00e676] text-sm md:text-base font-mono flex-1 break-all">
+                        {showApiKey ? apiKey : '••••••••••••••••••••••••••••••••'}
+                      </code>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setShowApiKey(!showApiKey)}
+                          className="text-gray-400 hover:text-white p-2 transition-colors rounded-lg hover:bg-white/10"
+                          title={showApiKey ? 'Hide API key' : 'Show API key'}
+                        >
+                          {showApiKey ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                        <button
+                          onClick={() => copyToClipboard(apiKey, 'api-key')}
+                          className="flex items-center gap-2 text-gray-400 hover:text-white px-3 py-2 transition-colors rounded-lg hover:bg-white/10"
+                          title="Copy API key"
+                        >
+                          {copiedStates['api-key'] ? (
+                            <>
+                              <Check size={18} className="text-[#00e676]" />
+                              <span className="text-[#00e676] text-sm">Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy size={18} />
+                              <span className="text-sm">Copy</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-                <h3 className="text-blue-400 font-medium mb-2">Setup Instructions:</h3>
-                <p className="text-gray-300 text-sm">
-                  {PLATFORMS.find(p => p.id === selectedPlatform)?.setupInstructions}
-                </p>
-              </div>
+                {/* Step 2 - Config */}
+                <div className="mb-8">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 bg-[#6c5ce7] rounded-full flex items-center justify-center text-white font-bold">
+                      2
+                    </div>
+                    <h3 className="text-xl font-semibold text-white">Add to your agent config</h3>
+                  </div>
 
-              {connectionStatus && (
-                <div className={`mb-6 p-4 rounded-xl border ${
-                  connectionStatus === 'success' ? 'bg-green-500/10 border-green-500/20' :
-                  connectionStatus === 'error' ? 'bg-red-500/10 border-red-500/20' :
-                  'bg-blue-500/10 border-blue-500/20'
-                }`}>
-                  <div className="flex items-center space-x-2">
-                    {connectionStatus === 'testing' && (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></div>
-                        <span className="text-blue-400 text-sm">Testing connection...</span>
-                      </>
-                    )}
-                    {connectionStatus === 'success' && (
-                      <>
-                        <div className="w-4 h-4 bg-green-400 rounded-full flex items-center justify-center">
-                          <svg className="w-2 h-2 text-green-900" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                        <span className="text-green-400 text-sm">Connection successful!</span>
-                      </>
-                    )}
-                    {connectionStatus === 'error' && (
-                      <>
-                        <div className="w-4 h-4 bg-red-400 rounded-full flex items-center justify-center">
-                          <svg className="w-2 h-2 text-red-900" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                        <span className="text-red-400 text-sm">Connection failed. Please check your setup.</span>
-                      </>
-                    )}
+                  {/* Platform Tabs */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {TABS.map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                          activeTab === tab.id
+                            ? 'bg-[#6c5ce7] text-white'
+                            : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                        }`}
+                      >
+                        <tab.icon size={16} />
+                        <span className="font-medium">{tab.name}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Config Code Block */}
+                  <div className="bg-black/50 rounded-xl border border-white/20 overflow-hidden">
+                    <div className="flex items-center justify-between p-4 border-b border-white/20">
+                      <div className="flex items-center gap-2">
+                        <Terminal size={16} className="text-gray-400" />
+                        <span className="text-gray-300 text-sm">
+                          {TABS.find(t => t.id === activeTab)?.configFile}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => copyToClipboard(getConfigSnippet(activeTab, apiKey), `config-${activeTab}`)}
+                        className="flex items-center gap-2 text-gray-400 hover:text-white px-3 py-1 transition-colors rounded-lg hover:bg-white/10"
+                      >
+                        {copiedStates[`config-${activeTab}`] ? (
+                          <>
+                            <Check size={16} className="text-[#00e676]" />
+                            <span className="text-[#00e676] text-sm">Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={16} />
+                            <span className="text-sm">Copy</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <pre className="p-4 text-sm text-gray-300 overflow-x-auto">
+                      <code>{getConfigSnippet(activeTab, apiKey)}</code>
+                    </pre>
+                  </div>
+
+                  {/* Platform-specific notes */}
+                  {activeTab === 'claude-desktop' && (
+                    <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                      <p className="text-blue-400 text-sm">
+                        <strong>Config locations:</strong><br />
+                        • macOS: <code>~/Library/Application Support/Claude/claude_desktop_config.json</code><br />
+                        • Windows: <code>%APPDATA%/Claude/claude_desktop_config.json</code>
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Step 3 - Complete */}
+                <div className="mb-8">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 bg-[#6c5ce7] rounded-full flex items-center justify-center text-white font-bold">
+                      3
+                    </div>
+                    <h3 className="text-xl font-semibold text-white">Your agent is connected!</h3>
+                  </div>
+                  
+                  <div className="p-4 bg-[#00e676]/10 border border-[#00e676]/20 rounded-xl">
+                    <p className="text-[#00e676] mb-2">
+                      <strong>You're all set!</strong> Restart your agent and it will have access to The Grid tools.
+                    </p>
+                    <p className="text-gray-300 text-sm">
+                      Your agent can now report tasks, sync skills, update stats, and climb the leaderboard automatically.
+                    </p>
                   </div>
                 </div>
-              )}
 
-              <div className="flex space-x-4">
-                <button
-                  onClick={handleTestConnection}
-                  disabled={isTestingConnection}
-                  className="flex-1 bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-6 rounded-xl transition-all disabled:opacity-50"
-                >
-                  Test Connection
-                </button>
+                {/* Action Button */}
                 <button
                   onClick={() => router.push('/dashboard')}
-                  className="flex-1 bg-gradient-to-r from-[#6c5ce7] to-[#00e676] hover:from-[#5b4bd3] hover:to-[#00d967] text-white font-semibold py-3 px-6 rounded-xl transition-all"
+                  className="w-full bg-gradient-to-r from-[#6c5ce7] to-[#00e676] hover:from-[#5b4bd3] hover:to-[#00d967] text-white font-semibold py-4 px-6 rounded-xl transition-all text-lg"
                 >
-                  {connectionStatus === 'success' ? 'Go to Dashboard' : 'Continue Anyway'}
+                  View Dashboard
                 </button>
               </div>
-            </div>
+
+              {/* Advanced Section - Manual API */}
+              <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden shadow-2xl">
+                <button
+                  onClick={() => setShowAdvanced(!showAdvanced)}
+                  className="w-full p-6 flex items-center justify-between hover:bg-white/5 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Settings className="text-gray-400" size={24} />
+                    <div className="text-left">
+                      <h3 className="text-lg font-semibold text-white">Advanced: Manual REST API</h3>
+                      <p className="text-gray-400 text-sm">For developers who want direct API access</p>
+                    </div>
+                  </div>
+                  {showAdvanced ? <ChevronUp className="text-gray-400" size={20} /> : <ChevronDown className="text-gray-400" size={20} />}
+                </button>
+
+                <AnimatePresence>
+                  {showAdvanced && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="border-t border-white/20"
+                    >
+                      <div className="p-6 space-y-6">
+                        <div className="grid md:grid-cols-2 gap-4">
+                          {/* Endpoints */}
+                          <div>
+                            <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
+                              <Link size={16} />
+                              API Endpoints
+                            </h4>
+                            <div className="space-y-2 text-sm">
+                              <div className="bg-black/30 p-3 rounded-lg">
+                                <code className="text-[#00e676]">POST /api/heartbeat</code>
+                                <p className="text-gray-400 mt-1">Mark agent as active</p>
+                              </div>
+                              <div className="bg-black/30 p-3 rounded-lg">
+                                <code className="text-[#00e676]">POST /api/stats</code>
+                                <p className="text-gray-400 mt-1">Update agent statistics</p>
+                              </div>
+                              <div className="bg-black/30 p-3 rounded-lg">
+                                <code className="text-[#00e676]">POST /api/skills</code>
+                                <p className="text-gray-400 mt-1">Sync installed skills</p>
+                              </div>
+                              <div className="bg-black/30 p-3 rounded-lg">
+                                <code className="text-[#00e676]">POST /api/memory</code>
+                                <p className="text-gray-400 mt-1">Update memory stats</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Authentication */}
+                          <div>
+                            <h4 className="text-white font-semibold mb-3">Authentication</h4>
+                            <div className="bg-black/30 p-3 rounded-lg">
+                              <p className="text-gray-300 text-sm mb-2">Include in headers:</p>
+                              <code className="text-[#00e676] text-sm break-all">
+                                Authorization: Bearer {apiKey}
+                              </code>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                          <p className="text-amber-400 text-sm">
+                            <strong>Note:</strong> Manual API integration requires custom implementation. 
+                            MCP is much simpler and provides the same functionality automatically.
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
           )}
-        </motion.div>
         </div>
       </div>
     </div>
