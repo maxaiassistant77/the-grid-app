@@ -101,3 +101,12 @@ body {
 .medal-bronze {
   background: linear-gradient(135deg, #CD7F32 0%, #B8860B 100%);
 }
+
+/* Hide scrollbar for tab navigation */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
