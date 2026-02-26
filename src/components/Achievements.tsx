@@ -51,10 +51,18 @@ export function Achievements({ refreshTrigger }: AchievementsProps) {
               </motion.div>
 
               {/* Tooltip */}
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-[#0a0a0f] text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-[#0a0a0f] text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 
+                               group-hover:animate-in group-hover:fade-in-0 group-hover:zoom-in-95 
+                               max-w-xs text-center
+                               [&:hover]:opacity-0
+                               before:content-[''] before:absolute before:top-full before:left-1/2 before:-translate-x-1/2 before:border-4 before:border-transparent before:border-t-[#0a0a0f]
+                               after:content-[''] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:w-0 after:h-0
+                               [transform:translate(-50%,-100%)]
+                               hover:[transform:translate(-50%,20%)]
+                               data-[side=top]:animate-in data-[side=top]:slide-in-from-bottom-2
+                               data-[side=bottom]:animate-in data-[side=bottom]:slide-in-from-top-2">
                 <p className="font-semibold">{achievement.name}</p>
                 <p className="text-gray-400">{achievement.description}</p>
-                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#0a0a0f]" />
               </div>
             </motion.div>
           );

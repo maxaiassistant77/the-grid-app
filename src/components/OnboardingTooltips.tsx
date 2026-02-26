@@ -127,17 +127,27 @@ export function OnboardingTooltips() {
   const getTooltipPosition = () => {
     if (step.position === 'center' || !targetRect) {
       return {
+        position: 'fixed' as const,
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
+        maxWidth: 'min(400px, calc(100vw - 2rem))',
       };
     }
 
+    // Get viewport dimensions
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
     const margin = 16;
+    const tooltipWidth = 384; // max-w-sm = 384px
+    const tooltipHeight = 200; // estimated tooltip height
+    
     let top = 0;
     let left = 0;
     let transform = '';
+    let adjustedPosition = step.position;
 
+    // Calculate initial position based on desired placement
     switch (step.position) {
       case 'top':
         top = targetRect.top - margin;
@@ -161,10 +171,70 @@ export function OnboardingTooltips() {
         break;
     }
 
-    return { top: `${top}px`, left: `${left}px`, transform };
+    // Check viewport boundaries and adjust if necessary
+    let finalTop = top;
+    let finalLeft = left;
+    let finalTransform = transform;
+
+    // Check if tooltip would go off-screen and adjust
+    const tooltipRect = {
+      top: step.position === 'top' ? top - tooltipHeight : top,
+      left: step.position === 'left' ? left - tooltipWidth : step.position === 'right' ? left : left - tooltipWidth / 2,
+      bottom: step.position === 'top' ? top : top + tooltipHeight,
+      right: step.position === 'left' ? left : step.position === 'right' ? left + tooltipWidth : left + tooltipWidth / 2,
+    };
+
+    // If tooltip would be off-screen, fall back to center positioning
+    if (
+      tooltipRect.top < margin ||
+      tooltipRect.bottom > viewportHeight - margin ||
+      tooltipRect.left < margin ||
+      tooltipRect.right > viewportWidth - margin
+    ) {
+      return {
+        position: 'fixed' as const,
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        maxWidth: 'min(400px, calc(100vw - 2rem))',
+      };
+    }
+
+    // Ensure the tooltip stays within bounds with fine adjustments
+    if (step.position === 'bottom' || step.position === 'top') {
+      // Horizontal centering with bounds checking
+      const idealLeft = targetRect.left + targetRect.width / 2;
+      const minLeft = tooltipWidth / 2 + margin;
+      const maxLeft = viewportWidth - tooltipWidth / 2 - margin;
+      finalLeft = Math.max(minLeft, Math.min(maxLeft, idealLeft));
+      finalTransform = 'translate(-50%, ' + (step.position === 'top' ? '-100%)' : '0)');
+    }
+
+    if (step.position === 'left' || step.position === 'right') {
+      // Vertical centering with bounds checking
+      const idealTop = targetRect.top + targetRect.height / 2;
+      const minTop = tooltipHeight / 2 + margin;
+      const maxTop = viewportHeight - tooltipHeight / 2 - margin;
+      finalTop = Math.max(minTop, Math.min(maxTop, idealTop));
+      finalTransform = 'translate(' + (step.position === 'left' ? '-100%' : '0') + ', -50%)';
+    }
+
+    return {
+      position: 'fixed' as const,
+      top: `${finalTop}px`,
+      left: `${finalLeft}px`,
+      transform: finalTransform,
+      maxWidth: 'min(400px, calc(100vw - 2rem))',
+    };
   };
 
   const getArrowClasses = () => {
+    // Don't show arrow if we're using center position or if target positioning failed
+    const tooltipPosition = getTooltipPosition();
+    if (step.position === 'center' || !targetRect || tooltipPosition.top === '50%') {
+      return '';
+    }
+
     switch (step.position) {
       case 'top':
         return 'absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45 bg-[#1a1a2e] border-r border-b border-[#6c5ce7]/30';
