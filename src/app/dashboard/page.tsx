@@ -16,6 +16,7 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [activeTab, setActiveTab] = useState('openclaw');
 
   const copyApiKey = async () => {
     if (agent?.api_key) {
@@ -252,71 +253,143 @@ export default function DashboardPage() {
             </motion.div>
           </div>
 
-          {/* API Integration Guide */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-            className="mt-8 bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 md:p-6"
-          >
-            <h3 className="text-lg md:text-xl font-semibold text-blue-400 mb-4 flex items-center space-x-2">
-              <Rocket size={20} />
-              <span>Integration Ready</span>
-            </h3>
-            <p className="text-gray-300 mb-4 text-sm md:text-base">
-              Your agent is set up! Use these API endpoints to report activity:
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 text-sm">
-              <div>
-                <strong className="text-blue-400">Heartbeat:</strong>
-                <code className="block bg-black/30 p-2 rounded mt-1 text-[#00e676] text-xs md:text-sm break-all">
-                  POST /api/agent/heartbeat
-                </code>
-              </div>
-              <div>
-                <strong className="text-blue-400">Report Stats:</strong>
-                <code className="block bg-black/30 p-2 rounded mt-1 text-[#00e676] text-xs md:text-sm break-all">
-                  POST /api/agent/stats
-                </code>
-              </div>
-              <div>
-                <strong className="text-blue-400">Update Skills:</strong>
-                <code className="block bg-black/30 p-2 rounded mt-1 text-[#00e676] text-xs md:text-sm break-all">
-                  POST /api/agent/skills
-                </code>
-              </div>
-              <div>
-                <strong className="text-blue-400">Report Memory:</strong>
-                <code className="block bg-black/30 p-2 rounded mt-1 text-[#00e676] text-xs md:text-sm break-all">
-                  POST /api/agent/memory
-                </code>
-              </div>
-            </div>
-            <div className="mt-4">
-              <p className="text-gray-400 text-sm mb-2">
-                Use Bearer authentication with your API key:
+          {/* MCP Connection Widget - Only show if agent hasn't reported any tasks */}
+          {(!stats || stats.tasks_completed === 0) && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 }}
+              className="mt-8 bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 p-4 md:p-6"
+            >
+              <h3 className="text-lg md:text-xl font-semibold text-white mb-2 flex items-center space-x-2">
+                <Zap size={20} className="text-[#6c5ce7]" />
+                <span>Connect Your Agent (2 minutes)</span>
+              </h3>
+              <p className="text-gray-300 mb-6 text-sm md:text-base">
+                Use the MCP server to automatically sync your agent's activity to The Grid
               </p>
-              <div className="flex items-center space-x-2 bg-black/30 p-3 rounded-lg">
-                <code className="text-[#00e676] flex-1 text-xs md:text-sm break-all">
-                  {showApiKey ? agent.api_key : '••••••••••••••••••••••••••••••••'}
-                </code>
+
+              <div className="space-y-6">
+                {/* Step 1: Copy API Key */}
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-6 bg-[#6c5ce7] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                      1
+                    </div>
+                    <h4 className="text-white font-medium">Copy your API key</h4>
+                  </div>
+                  <div className="flex items-center space-x-2 bg-black/30 p-3 rounded-lg">
+                    <code className="text-[#00e676] flex-1 text-xs md:text-sm break-all">
+                      {showApiKey ? agent.api_key : '••••••••••••••••••••••••••••••••'}
+                    </code>
+                    <button
+                      onClick={() => setShowApiKey(!showApiKey)}
+                      className="text-gray-400 hover:text-white p-1 transition-colors flex-shrink-0"
+                      title={showApiKey ? 'Hide API key' : 'Show API key'}
+                    >
+                      {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                    <button
+                      onClick={copyApiKey}
+                      className="text-gray-400 hover:text-white p-1 transition-colors flex-shrink-0"
+                      title="Copy API key"
+                    >
+                      <Copy size={16} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Step 2: Add to Agent Config */}
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-6 bg-[#6c5ce7] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                      2
+                    </div>
+                    <h4 className="text-white font-medium">Add to your agent config</h4>
+                  </div>
+                  
+                  {/* Tab Navigation */}
+                  <div className="flex space-x-1 bg-black/30 p-1 rounded-lg">
+                    <button
+                      onClick={() => setActiveTab('openclaw')}
+                      className={`px-3 py-1 rounded text-sm transition-colors ${
+                        activeTab === 'openclaw' 
+                          ? 'bg-[#6c5ce7] text-white' 
+                          : 'text-gray-400 hover:text-white'
+                      }`}
+                    >
+                      OpenClaw
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('claude')}
+                      className={`px-3 py-1 rounded text-sm transition-colors ${
+                        activeTab === 'claude' 
+                          ? 'bg-[#6c5ce7] text-white' 
+                          : 'text-gray-400 hover:text-white'
+                      }`}
+                    >
+                      Claude Desktop
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('other')}
+                      className={`px-3 py-1 rounded text-sm transition-colors ${
+                        activeTab === 'other' 
+                          ? 'bg-[#6c5ce7] text-white' 
+                          : 'text-gray-400 hover:text-white'
+                      }`}
+                    >
+                      Other
+                    </button>
+                  </div>
+
+                  {/* Tab Content */}
+                  <div className="bg-black/30 p-3 rounded-lg">
+                    {activeTab === 'openclaw' && (
+                      <code className="text-[#00e676] text-xs block whitespace-pre">
+{`# Install the Grid skill
+clawhub install grid-sync
+
+# Your API key is automatically loaded
+# from ~/.openclaw/workspace/TOOLS.md`}
+                      </code>
+                    )}
+                    {activeTab === 'claude' && (
+                      <code className="text-[#00e676] text-xs block whitespace-pre">
+{`{
+  "mcpServers": {
+    "grid": {
+      "command": "npx",
+      "args": ["@grid/mcp-server"],
+      "env": {
+        "GRID_API_KEY": "${agent.api_key}"
+      }
+    }
+  }
+}`}
+                      </code>
+                    )}
+                    {activeTab === 'other' && (
+                      <code className="text-[#00e676] text-xs block whitespace-pre">
+{`export GRID_API_KEY="${agent.api_key}"
+# Then configure your MCP client
+# to connect to The Grid`}
+                      </code>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6">
                 <button
-                  onClick={() => setShowApiKey(!showApiKey)}
-                  className="text-gray-400 hover:text-white p-1 transition-colors flex-shrink-0"
-                  title={showApiKey ? 'Hide API key' : 'Show API key'}
+                  onClick={() => router.push('/connect')}
+                  className="bg-gradient-to-r from-[#6c5ce7] to-[#00e676] hover:from-[#5b4bd3] hover:to-[#00d967] text-white px-4 py-2 rounded-lg transition-all flex items-center space-x-2"
                 >
-                  {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-                <button
-                  onClick={copyApiKey}
-                  className="text-gray-400 hover:text-white p-1 transition-colors flex-shrink-0"
-                  title="Copy API key"
-                >
-                  <Copy size={16} />
+                  <span>View Full Setup Guide</span>
+                  <Rocket size={16} />
                 </button>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          )}
         </div>
       </div>
     </div>
