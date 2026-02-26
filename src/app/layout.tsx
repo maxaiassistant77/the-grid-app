@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/lib/auth/context";
+import { AchievementProvider } from "@/contexts/AchievementContext";
 import { MobileNav } from "@/components/MobileNav";
 import "./globals.css";
 
@@ -84,8 +85,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          {children}
-          <MobileNav />
+          <AchievementProvider>
+            {children}
+            <MobileNav />
+          </AchievementProvider>
         </AuthProvider>
       </body>
     </html>

@@ -584,37 +584,202 @@ function ProfileContent() {
             >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-semibold text-white">Achievements</h3>
-                <div className="text-sm text-gray-300">{achievements.length} unlocked</div>
+                <div className="flex items-center space-x-4">
+                  <div className="text-sm text-gray-300">{achievements.length} unlocked</div>
+                  {/* Sort controls can be added here in future */}
+                </div>
               </div>
               
               {achievements.length === 0 ? (
                 <div className="text-center py-12">
-                  <Trophy size={48} className="mx-auto mb-4 text-gray-500" />
-                  <p className="text-gray-400">No achievements unlocked yet</p>
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: 'spring', stiffness: 200 }}
+                  >
+                    <Trophy size={48} className="mx-auto mb-4 text-gray-500" />
+                    <p className="text-gray-400">No achievements unlocked yet</p>
+                    <p className="text-gray-500 text-sm mt-2">Complete tasks to earn your first achievement!</p>
+                  </motion.div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                  {achievements.map((achievement, i) => (
-                    <motion.div
-                      key={achievement.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.1 }}
-                      className="p-4 rounded-xl bg-gradient-to-r from-[#6c5ce7]/10 to-[#00e676]/10 border border-[#6c5ce7]/20"
-                    >
-                      <div className="text-center">
-                        <div className="flex justify-center mb-2">
-                          <AchievementBadge achievementId={achievement.id} points={50} size={64} />
-                        </div>
-                        <h4 className="font-semibold text-white mb-1">{achievement.name}</h4>
-                        <p className="text-sm text-gray-300 mb-2">{achievement.description}</p>
-                        <p className="text-xs text-gray-400">
-                          Unlocked {new Date(achievement.unlocked_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </motion.div>
-                  ))}
+                  {achievements.map((achievement, i) => {
+                    const categoryColors: Record<string, { primary: string; secondary: string }> = {
+                      activity: { primary: '#00e676', secondary: '#00e676' },
+                      streak: { primary: '#ff6b35', secondary: '#ff9500' },
+                      score: { primary: '#ffd700', secondary: '#ffaa00' },
+                      special: { primary: '#6c5ce7', secondary: '#a29bfe' },
+                    };
+                    
+                    const colors = categoryColors[achievement.category] || categoryColors.special;
+                    const achievementPoints = 50; // TODO: Get from achievement data
+                    
+                    return (
+                      <motion.div
+                        key={achievement.id}
+                        initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ 
+                          delay: i * 0.08,
+                          type: 'spring',
+                          stiffness: 200,
+                          damping: 15
+                        }}
+                        whileHover={{ 
+                          y: -8,
+                          scale: 1.02,
+                          transition: { type: 'spring', stiffness: 400, damping: 25 }
+                        }}
+                        className="group relative cursor-pointer"
+                      >
+                        {/* Hover glow effect */}
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          whileHover={{ opacity: 0.4 }}
+                          transition={{ duration: 0.3 }}
+                          className="absolute -inset-1 rounded-2xl blur-lg"
+                          style={{ 
+                            background: `linear-gradient(135deg, ${colors.primary}40, ${colors.secondary}40)`
+                          }}
+                        />
+                        
+                        <motion.div
+                          className="relative p-6 rounded-xl bg-gradient-to-br from-white/10 to-white/5 border border-white/20 backdrop-blur-sm overflow-hidden"
+                          whileHover={{ 
+                            borderColor: colors.primary + '60',
+                            transition: { duration: 0.2 }
+                          }}
+                        >
+                          {/* Background pattern */}
+                          <div className="absolute top-0 right-0 w-20 h-20 opacity-5">
+                            <div 
+                              className="w-full h-full rounded-full"
+                              style={{ backgroundColor: colors.primary }}
+                            />
+                          </div>
+                          
+                          <div className="relative z-10">
+                            {/* Badge with enhanced animation */}
+                            <div className="flex justify-center mb-4">
+                              <motion.div
+                                whileHover={{ 
+                                  rotate: [0, -5, 5, 0],
+                                  scale: 1.1,
+                                  transition: { duration: 0.4 }
+                                }}
+                                className="relative"
+                              >
+                                <AchievementBadge 
+                                  achievementId={achievement.id} 
+                                  points={achievementPoints} 
+                                  size={72} 
+                                />
+                                
+                                {/* Shine effect on hover */}
+                                <motion.div
+                                  initial={{ opacity: 0, x: -100 }}
+                                  whileHover={{ 
+                                    opacity: [0, 0.8, 0], 
+                                    x: [-100, 100],
+                                    transition: { duration: 0.6 }
+                                  }}
+                                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 rounded-full"
+                                />
+                              </motion.div>
+                            </div>
+                            
+                            {/* Achievement info */}
+                            <div className="text-center">
+                              <motion.h4
+                                className="font-bold text-white mb-2 group-hover:text-opacity-90"
+                                style={{ 
+                                  textShadow: '0 2px 4px rgba(0,0,0,0.5)' 
+                                }}
+                              >
+                                {achievement.name}
+                              </motion.h4>
+                              
+                              <motion.p
+                                initial={{ opacity: 0.7 }}
+                                whileHover={{ opacity: 1 }}
+                                className="text-sm text-gray-300 mb-3 leading-relaxed"
+                              >
+                                {achievement.description}
+                              </motion.p>
+                              
+                              {/* Points and date */}
+                              <div className="flex items-center justify-between text-xs">
+                                <motion.span
+                                  whileHover={{ scale: 1.1 }}
+                                  className="font-bold px-2 py-1 rounded-full bg-white/10"
+                                  style={{ color: colors.primary }}
+                                >
+                                  +{achievementPoints} pts
+                                </motion.span>
+                                
+                                <span className="text-gray-400">
+                                  {new Date(achievement.unlocked_at).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric'
+                                  })}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Hover tooltip - for future enhancement */}
+                          <motion.div
+                            initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                            whileHover={{ 
+                              opacity: 1, 
+                              y: 0, 
+                              scale: 1,
+                              transition: { delay: 0.5, duration: 0.2 }
+                            }}
+                            className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 pointer-events-none"
+                          >
+                            <div 
+                              className="px-3 py-1 rounded-lg text-xs font-medium text-white border border-white/20 backdrop-blur-sm"
+                              style={{ 
+                                backgroundColor: colors.primary + '20',
+                                borderColor: colors.primary + '40'
+                              }}
+                            >
+                              {achievement.category} achievement
+                            </div>
+                            <div 
+                              className="w-2 h-2 transform rotate-45 mx-auto -mt-1"
+                              style={{ backgroundColor: colors.primary + '20' }}
+                            />
+                          </motion.div>
+                        </motion.div>
+                      </motion.div>
+                    );
+                  })}
                 </div>
+              )}
+              
+              {/* Coming soon section for locked achievements */}
+              {achievements.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: achievements.length * 0.08 + 0.3 }}
+                  className="mt-8 p-6 rounded-xl bg-gradient-to-r from-white/5 to-white/10 border border-white/10"
+                >
+                  <div className="text-center">
+                    <motion.div
+                      animate={{ rotate: [0, 360] }}
+                      transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                      className="w-12 h-12 mx-auto mb-3 rounded-full border-2 border-gray-500/30 border-t-gray-300 flex items-center justify-center"
+                    >
+                      <Trophy size={20} className="text-gray-400" />
+                    </motion.div>
+                    <h4 className="text-gray-300 font-medium mb-1">More achievements coming soon</h4>
+                    <p className="text-gray-500 text-sm">Keep completing tasks to unlock new achievements!</p>
+                  </div>
+                </motion.div>
               )}
             </motion.div>
           )}
