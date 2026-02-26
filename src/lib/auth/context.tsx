@@ -13,7 +13,8 @@ interface AuthContextType {
   profile: Profile | null;
   agent: Agent | null;
   loading: boolean;
-  signInWithEmail: (email: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   refreshAgent: () => Promise<void>;
@@ -108,17 +109,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
-  const signInWithEmail = async (email: string) => {
-    const { error } = await supabase.auth.signInWithOtp({
+  const signUp = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signUp({
       email,
+      password,
       options: {
         emailRedirectTo: `${window.location.origin}/dashboard`,
       },
     });
+    if (error) throw error;
+  };
 
-    if (error) {
-      throw error;
-    }
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) throw error;
   };
 
   const signOut = async () => {
@@ -133,7 +140,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     profile,
     agent,
     loading,
-    signInWithEmail,
+    signUp,
+    signIn,
     signOut,
     refreshProfile,
     refreshAgent,

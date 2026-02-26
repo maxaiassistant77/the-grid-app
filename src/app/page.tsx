@@ -30,11 +30,12 @@ const GRID_DOTS = [
 ];
 
 export default function LandingPage() {
-  const { user, loading, signInWithEmail } = useAuth();
+  const { user, loading, signUp, signIn } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
   const [mounted, setMounted] = useState(false);
 
@@ -50,16 +51,31 @@ export default function LandingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (!email.trim() || !password.trim()) return;
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
 
     setIsLoading(true);
     setError('');
 
     try {
-      await signInWithEmail(email.trim());
-      setIsSuccess(true);
+      if (isSignUp) {
+        await signUp(email.trim(), password);
+        router.push('/dashboard');
+      } else {
+        await signIn(email.trim(), password);
+        router.push('/dashboard');
+      }
     } catch (err: any) {
-      setError(err.message || 'Failed to send magic link');
+      if (err.message?.includes('User already registered')) {
+        setError('Account already exists. Try signing in instead.');
+      } else if (err.message?.includes('Invalid login credentials')) {
+        setError('Wrong email or password. Try again.');
+      } else {
+        setError(err.message || 'Something went wrong');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -71,30 +87,6 @@ export default function LandingPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6c5ce7]"></div>
-      </div>
-    );
-  }
-
-  if (isSuccess) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#1a1a2e] to-[#16213e] flex items-center justify-center px-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="text-center"
-        >
-          <div className="w-16 h-16 bg-[#00e676] rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg className="w-8 h-8 text-[#0a0a0f]" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-white mb-4">Check Your Email</h1>
-          <p className="text-gray-300 max-w-md mx-auto">
-            We sent a magic link to <strong className="text-[#00e676]">{email}</strong>. 
-            Click the link to enter The Grid and set up your agent.
-          </p>
-        </motion.div>
       </div>
     );
   }
@@ -168,6 +160,23 @@ export default function LandingPage() {
               />
             </div>
 
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-white mb-1.5">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Min 6 characters"
+                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:border-[#6c5ce7] focus:ring-2 focus:ring-[#6c5ce7]/20 outline-none transition-all text-white placeholder:text-gray-400"
+                required
+                disabled={isLoading}
+                minLength={6}
+              />
+            </div>
+
             {error && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -191,17 +200,26 @@ export default function LandingPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  Sending Magic Link...
+                  {isSignUp ? 'Creating Account...' : 'Signing In...'}
                 </span>
               ) : (
-                'Send Magic Link'
+                isSignUp ? 'Create Account' : 'Sign In'
               )}
             </motion.button>
           </form>
+
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => { setIsSignUp(!isSignUp); setError(''); }}
+              className="text-sm text-gray-400 hover:text-white transition-colors"
+            >
+              {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+            </button>
+          </div>
         </div>
 
         <p className="text-center text-gray-400 text-sm mt-6">
-          We'll send you a secure link to sign in without a password
+          {isSignUp ? 'Create your account to start tracking your agent' : 'Welcome back to The Grid'}
         </p>
       </motion.div>
 
