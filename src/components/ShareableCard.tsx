@@ -31,8 +31,9 @@ export function ShareableCard({ agentName, ownerName, level, totalScore, radarDa
     const ctx = canvas.getContext('2d');
     if (!ctx) return null;
     
-    const w = 600;
-    const h = 800;
+    // Optimized for social media sharing (1200x630 aspect ratio)
+    const w = 1200;
+    const h = 630;
     canvas.width = w;
     canvas.height = h;
     
@@ -60,32 +61,42 @@ export function ShareableCard({ agentName, ownerName, level, totalScore, radarDa
     ctx.roundRect(15, 15, w - 30, h - 30, 20);
     ctx.stroke();
     
+    // Top title section
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('AI AGENT PERFORMANCE', w / 2, 65);
+    
+    // Left side - Agent info (positioned for 1200x630)
+    const leftX = w * 0.25; // 25% from left
+    const centerY = h / 2;
+    
     // Agent avatar circle
-    const avatarGrad = ctx.createLinearGradient(w/2 - 40, 60, w/2 + 40, 140);
+    const avatarGrad = ctx.createLinearGradient(leftX - 50, centerY - 80, leftX + 50, centerY);
     avatarGrad.addColorStop(0, '#6c5ce7');
     avatarGrad.addColorStop(1, '#00e676');
     ctx.fillStyle = avatarGrad;
     ctx.beginPath();
-    ctx.arc(w / 2, 100, 40, 0, Math.PI * 2);
+    ctx.arc(leftX, centerY - 40, 50, 0, Math.PI * 2);
     ctx.fill();
     
     // Avatar letter
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 32px system-ui, -apple-system, sans-serif';
+    ctx.font = 'bold 40px system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(agentName.charAt(0).toUpperCase(), w / 2, 102);
+    ctx.fillText(agentName.charAt(0).toUpperCase(), leftX, centerY - 38);
     
     // Agent name
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
+    ctx.font = 'bold 36px system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(agentName, w / 2, 170);
+    ctx.fillText(agentName, leftX, centerY + 30);
     
     // Owner name
     ctx.fillStyle = '#9ca3af';
-    ctx.font = '16px system-ui, -apple-system, sans-serif';
-    ctx.fillText(`Agent for ${ownerName}`, w / 2, 200);
+    ctx.font = '18px system-ui, -apple-system, sans-serif';
+    ctx.fillText(`Agent for ${ownerName}`, leftX, centerY + 65);
     
     // Level badge
     const levelColors: Record<string, string> = {
@@ -97,32 +108,32 @@ export function ShareableCard({ agentName, ownerName, level, totalScore, radarDa
     };
     const levelColor = levelColors[level] || '#9ca3af';
     
-    const badgeWidth = ctx.measureText(level).width + 40;
+    ctx.font = 'bold 18px system-ui, -apple-system, sans-serif';
+    const badgeWidth = ctx.measureText(level).width + 50;
     ctx.fillStyle = levelColor + '30';
     ctx.beginPath();
-    ctx.roundRect(w / 2 - badgeWidth / 2, 215, badgeWidth, 30, 15);
+    ctx.roundRect(leftX - badgeWidth / 2, centerY + 85, badgeWidth, 36, 18);
     ctx.fill();
     ctx.strokeStyle = levelColor + '60';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.roundRect(w / 2 - badgeWidth / 2, 215, badgeWidth, 30, 15);
+    ctx.roundRect(leftX - badgeWidth / 2, centerY + 85, badgeWidth, 36, 18);
     ctx.stroke();
     ctx.fillStyle = levelColor;
-    ctx.font = 'bold 14px system-ui, -apple-system, sans-serif';
-    ctx.fillText(level, w / 2, 232);
+    ctx.fillText(level, leftX, centerY + 106);
     
     // Total score
     ctx.fillStyle = '#00e676';
-    ctx.font = 'bold 48px system-ui, -apple-system, sans-serif';
-    ctx.fillText(totalScore.toLocaleString(), w / 2, 290);
+    ctx.font = 'bold 60px system-ui, -apple-system, sans-serif';
+    ctx.fillText(totalScore.toLocaleString(), leftX, centerY + 160);
     ctx.fillStyle = '#9ca3af';
-    ctx.font = '14px system-ui, -apple-system, sans-serif';
-    ctx.fillText('TOTAL SCORE', w / 2, 315);
+    ctx.font = '18px system-ui, -apple-system, sans-serif';
+    ctx.fillText('TOTAL SCORE', leftX, centerY + 185);
     
-    // Radar chart
-    const rcx = w / 2;
-    const rcy = 480;
-    const rr = 120;
+    // Radar chart (right side)
+    const rcx = w * 0.75; // 75% from left
+    const rcy = centerY;
+    const rr = 140;
     const angles = [0, 60, 120, 180, 240, 300];
     const labels = ['Activity', 'Capability', 'Complexity', 'Memory', 'Proactivity', 'Integration'];
     const values = [radarData.activity, radarData.capability, radarData.complexity, radarData.memory, radarData.proactivity, radarData.integration];
@@ -189,34 +200,40 @@ export function ShareableCard({ agentName, ownerName, level, totalScore, radarDa
     ctx.textBaseline = 'middle';
     angles.forEach((angle, i) => {
       const rad = (angle - 90) * Math.PI / 180;
-      const lx = rcx + Math.cos(rad) * (rr + 30);
-      const ly = rcy + Math.sin(rad) * (rr + 30);
+      const lx = rcx + Math.cos(rad) * (rr + 40);
+      const ly = rcy + Math.sin(rad) * (rr + 40);
       
+      // Adjust text anchor for better positioning
+      let textAnchor: CanvasTextAlign = 'center';
+      if (angle > 30 && angle < 150) textAnchor = 'start';
+      else if (angle > 210 && angle < 330) textAnchor = 'end';
+      
+      ctx.textAlign = textAnchor;
       ctx.fillStyle = '#9ca3af';
-      ctx.font = '12px system-ui, -apple-system, sans-serif';
-      ctx.fillText(labels[i], lx, ly - 7);
+      ctx.font = '14px system-ui, -apple-system, sans-serif';
+      ctx.fillText(labels[i], lx, ly - 10);
       
       ctx.fillStyle = '#00e676';
-      ctx.font = 'bold 14px system-ui, -apple-system, sans-serif';
-      ctx.fillText(String(values[i]), lx, ly + 9);
+      ctx.font = 'bold 16px system-ui, -apple-system, sans-serif';
+      ctx.fillText(String(values[i]), lx, ly + 10);
     });
     
     // Separator line
     ctx.strokeStyle = 'rgba(255,255,255,0.1)';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(60, h - 80);
-    ctx.lineTo(w - 60, h - 80);
+    ctx.moveTo(60, h - 100);
+    ctx.lineTo(w - 60, h - 100);
     ctx.stroke();
     
     // Branding
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 18px system-ui, -apple-system, sans-serif';
+    ctx.font = 'bold 24px system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('THE GRID', w / 2, h - 50);
+    ctx.fillText('THE GRID', w / 2, h - 65);
     ctx.fillStyle = '#6b7280';
-    ctx.font = '12px system-ui, -apple-system, sans-serif';
-    ctx.fillText('the-grid-app.vercel.app', w / 2, h - 30);
+    ctx.font = '16px system-ui, -apple-system, sans-serif';
+    ctx.fillText('the-grid-app.vercel.app', w / 2, h - 40);
     
     return canvas.toDataURL('image/png');
   }, [agentName, ownerName, level, totalScore, radarData]);

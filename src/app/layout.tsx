@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/lib/auth/context";
 import { AchievementProvider } from "@/contexts/AchievementContext";
 import { MobileNav } from "@/components/MobileNav";
+import { OnboardingTooltips } from "@/components/OnboardingTooltips";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -88,6 +89,7 @@ export default function RootLayout({
           <AchievementProvider>
             {children}
             <MobileNav />
+            <OnboardingTooltips />
           </AchievementProvider>
         </AuthProvider>
       </body>

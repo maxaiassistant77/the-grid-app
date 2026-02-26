@@ -72,10 +72,13 @@ export function Navbar() {
           <div className="hidden md:flex items-center space-x-8">
             {navLinks.map((link) => {
               const Icon = link.icon;
+              const dataAttr = link.name.toLowerCase() === 'leaderboard' ? 'leaderboard' : 
+                              link.name.toLowerCase() === 'profile' ? 'profile' : undefined;
               return (
                 <button
                   key={link.name}
                   onClick={() => router.push(link.href)}
+                  data-onboarding={dataAttr}
                   className={`flex items-center space-x-2 px-3 py-2 text-sm font-medium transition-all duration-200 ${
                     link.active
                       ? 'text-[#6c5ce7] border-b-2 border-[#6c5ce7]'
@@ -94,7 +97,11 @@ export function Navbar() {
             {user ? (
               <>
                 {/* Score Pill */}
-                {agent && <ScorePill score={agentScore} level={agentLevel} />}
+                {agent && (
+                  <div data-onboarding="score">
+                    <ScorePill score={agentScore} level={agentLevel} />
+                  </div>
+                )}
 
                 {/* Agent Status - desktop only */}
                 {agent && (
@@ -146,6 +153,7 @@ export function Navbar() {
                             setIsDropdownOpen(false);
                             router.push('/connect');
                           }}
+                          data-onboarding="connect"
                           className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10 text-left"
                         >
                           <Settings size={14} />

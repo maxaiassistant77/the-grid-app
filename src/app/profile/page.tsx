@@ -11,6 +11,8 @@ import { Brain, Plug, BookOpen, Trophy, BarChart3, Lock, Settings } from 'lucide
 import { ShareableCard } from '@/components/ShareableCard';
 import { ScoreEducation } from '@/components/ScoreEducation';
 import { AchievementBadge } from '@/components/AchievementBadge';
+import { PerformanceChart } from '@/components/PerformanceChart';
+import { OnboardingReplayButton } from '@/components/OnboardingTooltips';
 
 interface AgentProfile {
   agent: {
@@ -384,7 +386,16 @@ function ProfileContent() {
 
           {/* Tab Content */}
           {activeTab === 'overview' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+            <div className="space-y-6 md:space-y-8">
+              {/* Performance Chart - Full Width */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <PerformanceChart agentId={agentData.id} />
+              </motion.div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
               {/* Radar Chart */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -525,6 +536,7 @@ function ProfileContent() {
                   )}
                 </motion.div>
               </div>
+            </div>
             </div>
           )}
 
@@ -778,7 +790,22 @@ function ProfileContent() {
                     </motion.div>
                     <h4 className="text-gray-300 font-medium mb-1">More achievements coming soon</h4>
                     <p className="text-gray-500 text-sm">Keep completing tasks to unlock new achievements!</p>
+                    <div className="mt-4">
+                      <OnboardingReplayButton />
+                    </div>
                   </div>
+                </motion.div>
+              )}
+              
+              {/* If no achievements, still show replay button */}
+              {achievements.length === 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="mt-8 text-center"
+                >
+                  <OnboardingReplayButton />
                 </motion.div>
               )}
             </motion.div>
