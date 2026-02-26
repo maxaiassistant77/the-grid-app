@@ -110,24 +110,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   const signUp = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
-      },
+    // Use server-side API to create user with auto-confirm (bypasses email rate limits)
+    const res = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
     });
-    if (error) throw error;
-    
-    // If email confirmation is required, Supabase returns a user but no session
-    // In that case, try signing in immediately
-    if (data?.user && !data?.session) {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (signInError) throw signInError;
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      if (data.error === 'already_exists') {
+        // Account exists, try signing in
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError) throw signInError;
+        return;
+      }
+      throw new Error(data.error || 'Failed to create account');
     }
+
+    // User created and confirmed, now sign in
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    if (signInError) throw signInError;
   };
 
   const signIn = async (email: string, password: string) => {
