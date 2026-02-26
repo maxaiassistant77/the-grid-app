@@ -62,17 +62,27 @@ export default function LandingPage() {
 
     try {
       if (isSignUp) {
-        await signUp(email.trim(), password);
-        router.push('/dashboard');
+        try {
+          await signUp(email.trim(), password);
+          router.push('/dashboard');
+        } catch (signUpErr: any) {
+          // If user exists, try signing in instead
+          if (signUpErr.message?.includes('User already registered') || signUpErr.message?.includes('already been registered')) {
+            await signIn(email.trim(), password);
+            router.push('/dashboard');
+          } else {
+            throw signUpErr;
+          }
+        }
       } else {
         await signIn(email.trim(), password);
         router.push('/dashboard');
       }
     } catch (err: any) {
-      if (err.message?.includes('User already registered')) {
-        setError('Account already exists. Try signing in instead.');
-      } else if (err.message?.includes('Invalid login credentials')) {
+      if (err.message?.includes('Invalid login credentials')) {
         setError('Wrong email or password. Try again.');
+      } else if (err.message?.includes('Email not confirmed')) {
+        setError('Email not confirmed. Try creating a new account with a different email.');
       } else {
         setError(err.message || 'Something went wrong');
       }
