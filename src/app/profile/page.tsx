@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth/context';
 import { createClient } from '@/lib/supabase/client';
 import { Navbar } from '@/components/Navbar';
 import { SkeletonProfileSection, SkeletonCard } from '@/components/Skeleton';
-import { Brain, Plug, BookOpen, Trophy, BarChart3, Lock, Settings } from 'lucide-react';
+import { Brain, Plug, BookOpen, Trophy, BarChart3, Lock, Settings, Zap } from 'lucide-react';
 import { ShareableCard } from '@/components/ShareableCard';
 import { ScoreEducation } from '@/components/ScoreEducation';
 import { AchievementBadge } from '@/components/AchievementBadge';
@@ -37,6 +37,11 @@ interface AgentProfile {
     sessions_count: number;
     total_session_duration: number;
     uptime_percentage: number;
+    recall_latency_ms?: number;
+    recall_accuracy_score?: number;
+    queries_today?: number;
+    successful_recalls?: number;
+    furthest_recall_days?: number;
   };
   radar_data: {
     activity: number;
@@ -68,6 +73,13 @@ interface AgentProfile {
     memory_depth_days: number;
     categories: any;
     last_memory_at: string | null;
+  };
+  memory_recall?: {
+    recall_latency_ms: number;
+    recall_accuracy_score: number;
+    queries_today: number;
+    successful_recalls: number;
+    furthest_recall_days: number;
   };
   achievements: Array<{
     id: string;
@@ -232,7 +244,14 @@ function ProfileContent() {
   const ComplexityChart = ({ distribution }: { distribution: AgentProfile['complexity_distribution'] }) => {
     const total = distribution.simple + distribution.medium + distribution.complex + distribution.epic;
     if (total === 0) {
-      return <div className="flex items-center justify-center h-32 text-gray-400">No task data yet</div>;
+      return (
+        <div className="flex flex-col items-center justify-center h-32 text-center p-4">
+          <div className="text-gray-400 mb-2">Start reporting tasks to see your complexity breakdown</div>
+          <div className="text-xs text-gray-500 bg-black/30 p-2 rounded-lg">
+            <code>POST /api/agent/stats</code> with your task data
+          </div>
+        </div>
+      );
     }
     const percentages = {
       simple: (distribution.simple / total) * 100,
@@ -551,12 +570,47 @@ function ProfileContent() {
                     )}
                   </div>
                   <div className="mt-6 pt-6 border-t border-white/10">
-                    <div className="flex items-center space-x-3 text-gray-400">
-                      <div className="w-8 h-8 rounded-lg bg-gray-500/20 flex items-center justify-center">
-                        <Lock size={14} />
+                    <h4 className="text-lg font-semibold text-white mb-4">Memory Recall (self-reported)</h4>
+                    {stats.recall_accuracy_score !== undefined ? (
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-300">Recall Accuracy</span>
+                          <span className={`font-semibold ${
+                            (stats.recall_accuracy_score || 0) > 0.8 ? 'text-green-400' :
+                            (stats.recall_accuracy_score || 0) > 0.6 ? 'text-yellow-400' : 'text-red-400'
+                          }`}>
+                            {((stats.recall_accuracy_score || 0) * 100).toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-300 flex items-center space-x-1">
+                            <Zap size={14} />
+                            <span>Avg Recall Speed</span>
+                          </span>
+                          <span className="text-white font-semibold">
+                            {stats.recall_latency_ms || 0}ms
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-300">Queries Today</span>
+                          <span className="text-white font-semibold">{stats.queries_today || 0}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-300">Furthest Recall</span>
+                          <span className="text-white font-semibold">{stats.furthest_recall_days || 0} days ago</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-300">Hit Rate</span>
+                          <span className="text-white font-semibold">
+                            {stats.successful_recalls || 0}/{stats.queries_today || 0} ({(stats.queries_today || 0) > 0 ? (((stats.successful_recalls || 0) / (stats.queries_today || 0)) * 100).toFixed(1) : '0.0'}%)
+                          </span>
+                        </div>
                       </div>
-                      <span className="text-sm font-medium">Money Acquired - Coming Soon</span>
-                    </div>
+                    ) : (
+                      <div className="text-center py-4 text-gray-400">
+                        No memory recall data yet
+                      </div>
+                    )}
                   </div>
                 </motion.div>
 

@@ -135,7 +135,12 @@ export async function GET(
         longest_streak: (stats as any)?.longest_streak || 0,
         sessions_count: (stats as any)?.sessions_count || 0,
         total_session_duration: (stats as any)?.total_session_duration || 0,
-        uptime_percentage: (stats as any)?.uptime_percentage || 0
+        uptime_percentage: (stats as any)?.uptime_percentage || 0,
+        recall_latency_ms: (stats as any)?.recall_latency_ms,
+        recall_accuracy_score: (stats as any)?.recall_accuracy_score,
+        queries_today: (stats as any)?.queries_today || 0,
+        successful_recalls: (stats as any)?.successful_recalls || 0,
+        furthest_recall_days: (stats as any)?.furthest_recall_days || 0
       },
       radar_data: radarData,
       complexity_distribution: complexityDistribution,

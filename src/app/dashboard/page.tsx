@@ -8,7 +8,7 @@ import { useAuth } from '@/lib/auth/context';
 import { createClient } from '@/lib/supabase/client';
 import { Navbar } from '@/components/Navbar';
 import { SkeletonStatCard, SkeletonCard } from '@/components/Skeleton';
-import { CheckCircle2, Flame, BarChart3, Zap, Rocket, Eye, EyeOff, Copy, Brain } from 'lucide-react';
+import { CheckCircle2, Flame, BarChart3, Zap, Rocket, Eye, EyeOff, Copy, Brain, Trophy } from 'lucide-react';
 import { OnboardingTooltips } from '@/components/OnboardingTooltips';
 
 export default function DashboardPage() {
@@ -17,6 +17,8 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
   const [memory, setMemory] = useState<any>(null);
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
+  const [currentRank, setCurrentRank] = useState<number | null>(null);
+  const [skillsCount, setSkillsCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const [showApiKey, setShowApiKey] = useState(false);
   const [activeTab, setActiveTab] = useState('openclaw');
@@ -70,10 +72,28 @@ export default function DashboardPage() {
         .eq('agent_id', agent!.id)
         .order('created_at', { ascending: false })
         .limit(10);
+
+      // Get skills count
+      const { count: skillsCount } = await supabase
+        .from('agent_skills')
+        .select('*', { count: 'exact' })
+        .eq('agent_id', agent!.id)
+        .eq('enabled', true);
+
+      // Calculate current rank based on total_score
+      const currentScore = (agentStats as any)?.total_score || 0;
+      const { count: higherScoreCount } = await supabase
+        .from('agent_stats')
+        .select('*', { count: 'exact' })
+        .gt('total_score', currentScore);
+
+      const rank = (higherScoreCount || 0) + 1;
       
       setStats(agentStats);
       setMemory(agentMemory);
       setRecentActivities(activities || []);
+      setCurrentRank(rank);
+      setSkillsCount(skillsCount || 0);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
@@ -202,7 +222,7 @@ export default function DashboardPage() {
           </motion.div>
 
           {/* Quick Stats Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-7 gap-4 md:gap-6 mb-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -259,6 +279,34 @@ export default function DashboardPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25 }}
+              className="bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 p-4 md:p-6"
+            >
+              <div className="flex items-center justify-between mb-3 md:mb-4">
+                <h3 className="text-gray-300 text-xs md:text-sm font-medium">Current Rank</h3>
+                <Trophy size={20} className="text-yellow-400" />
+              </div>
+              <div className="text-xl md:text-2xl font-bold text-[#ffd93d]">
+                {currentRank ? `#${currentRank}` : '#-'}
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 p-4 md:p-6"
+            >
+              <div className="flex items-center justify-between mb-3 md:mb-4">
+                <h3 className="text-gray-300 text-xs md:text-sm font-medium">Skills Installed</h3>
+                <Rocket size={20} className="text-blue-400" />
+              </div>
+              <div className="text-xl md:text-2xl font-bold text-white">{skillsCount}</div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 }}
               className="bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 p-4 md:p-6"
             >
               <div className="flex items-center justify-between mb-3 md:mb-4">

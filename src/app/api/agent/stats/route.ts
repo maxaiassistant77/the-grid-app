@@ -20,6 +20,30 @@ async function validateApiKey(apiKey: string): Promise<Agent | null> {
   return data;
 }
 
+function determineComplexity(activity: any): string {
+  const toolsCount = activity.tools_count || 0;
+  const durationMinutes = activity.duration_minutes || 0;
+  const hasSubagents = activity.type === 'subagent' || (activity.metadata && activity.metadata.subagents_spawned > 0);
+
+  // Epic: 25+ tools OR any subagent spawned OR multi-hour autonomous work  
+  if (hasSubagents || toolsCount >= 25 || durationMinutes >= 120) {
+    return 'epic';
+  }
+
+  // Complex: 11-25 tools OR 30+ minute tasks
+  if (toolsCount >= 11 || durationMinutes >= 30) {
+    return 'complex';
+  }
+
+  // Medium: 4-10 tools OR 5+ minute tasks
+  if (toolsCount >= 4 || durationMinutes >= 5) {
+    return 'medium';
+  }
+
+  // Simple: 1-3 tools, <5 min
+  return 'simple';
+}
+
 interface StatsUpdate {
   tasks_completed?: number;
   session_duration?: number; // minutes
@@ -36,6 +60,8 @@ interface StatsUpdate {
     complexity?: 'simple' | 'medium' | 'complex' | 'epic';
     description?: string;
     metadata?: any;
+    tools_count?: number;
+    duration_minutes?: number;
   }[];
 }
 
@@ -75,11 +101,16 @@ export async function POST(request: NextRequest) {
     // Log activities
     if (body.activities) {
       const activityLogs = body.activities.map(activity => {
+        // Auto-determine complexity if not provided, or if type is 'task'
+        const complexity = (activity.type === 'task' && (activity.tools_count || activity.duration_minutes)) 
+          ? determineComplexity(activity)
+          : activity.complexity || 'simple';
+        
         let points = 0;
         
         // Calculate points based on complexity
         if (activity.type === 'task') {
-          switch (activity.complexity) {
+          switch (complexity) {
             case 'simple': points = 1; break;
             case 'medium': points = 3; break;
             case 'complex': points = 5; break;
@@ -90,9 +121,13 @@ export async function POST(request: NextRequest) {
         return {
           agent_id: agent.id,
           type: activity.type,
-          complexity: activity.complexity || null,
+          complexity: complexity,
           description: activity.description || null,
-          metadata: activity.metadata || {},
+          metadata: {
+            ...activity.metadata,
+            tools_count: activity.tools_count,
+            duration_minutes: activity.duration_minutes
+          },
           points_earned: points
         };
       });
