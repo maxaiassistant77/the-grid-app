@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Navbar } from '@/components/Navbar';
 import { SkeletonLeaderboardRow, SkeletonCard } from '@/components/Skeleton';
 import { Trophy, CheckCircle2, Flame, Puzzle, TrendingUp, TrendingDown, Minus, Bot, Medal } from 'lucide-react';
+import { AgentAvatar } from '@/components/AgentAvatar';
 
 interface LeaderboardEntry {
   rank: number;
@@ -16,6 +17,7 @@ interface LeaderboardEntry {
   name: string;
   agent_name: string | null;
   avatar_url: string | null;
+  avatar_emoji?: string | null;
   total_score: number;
   level: string;
   tasks_completed: number;
@@ -334,9 +336,12 @@ export default function LeaderboardPage() {
                         </div>
 
                         {/* Avatar */}
-                        <div className="w-10 h-10 flex-shrink-0 rounded-xl bg-gradient-to-br from-[#6c5ce7] to-[#00e676] flex items-center justify-center text-white font-bold text-sm">
-                          {entry.name.charAt(0).toUpperCase()}
-                        </div>
+                        <AgentAvatar 
+                          agentName={entry.agent_name || undefined}
+                          userName={entry.name}
+                          avatarEmoji={entry.avatar_emoji || undefined}
+                          size="md"
+                        />
 
                         {/* Name & Agent */}
                         <div className="flex-1 min-w-0">

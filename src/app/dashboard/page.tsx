@@ -10,6 +10,7 @@ import { Navbar } from '@/components/Navbar';
 import { SkeletonStatCard, SkeletonCard } from '@/components/Skeleton';
 import { CheckCircle2, Flame, BarChart3, Zap, Rocket, Eye, EyeOff, Copy, Brain, Trophy } from 'lucide-react';
 import { OnboardingTooltips } from '@/components/OnboardingTooltips';
+import { ConnectAgentNudge } from '@/components/ConnectAgentNudge';
 
 export default function DashboardPage() {
   const { user, profile, agent, loading } = useAuth();
@@ -39,11 +40,13 @@ export default function DashboardPage() {
         router.push('/auth');
         return;
       }
-      if (!agent) {
-        router.push('/connect');
-        return;
+      // Don't redirect to connect page automatically - let the nudge handle it
+      if (agent) {
+        loadDashboardData();
+      } else {
+        // If no agent, show basic dashboard with nudge
+        setIsLoading(false);
       }
-      loadDashboardData();
     }
   }, [user, agent, loading, router]);
 
@@ -147,7 +150,10 @@ export default function DashboardPage() {
     );
   }
 
-  if (!user || !profile || !agent) {
+  // Determine if we should show the connect agent nudge
+  const shouldShowConnectNudge = !!(user && (!agent || agent.status !== 'connected'));
+
+  if (!user || !profile) {
     return null;
   }
 
@@ -155,6 +161,9 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#1a1a2e] to-[#16213e]">
       <Navbar />
       {/* <OnboardingTooltips /> */}
+      
+      {/* Connect Agent Nudge */}
+      <ConnectAgentNudge isVisible={shouldShowConnectNudge} />
       
       <div className="pt-16 pb-24 md:pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -171,47 +180,72 @@ export default function DashboardPage() {
           </div>
 
           {/* Agent Status Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-4 md:p-6"
-          >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-xl md:text-2xl font-bold text-white mb-2">
-                  {agent.name}
-                </h2>
-                <p className="text-gray-300 text-sm">
-                  Platform: {agent.platform} · Model: {agent.model || 'Unknown'}
-                </p>
-                {agent.last_seen_at && (
-                  <p className="text-gray-400 text-xs mt-1">
-                    Last seen: {new Date(agent.last_seen_at).toLocaleString()}
+          {agent ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-8 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-4 md:p-6"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl md:text-2xl font-bold text-white mb-2">
+                    {agent.name}
+                  </h2>
+                  <p className="text-gray-300 text-sm">
+                    Platform: {agent.platform} · Model: {agent.model || 'Unknown'}
                   </p>
-                )}
-              </div>
-              <div className="text-left sm:text-right">
-                <div className="text-2xl md:text-3xl font-bold text-[#00e676]">
-                  {stats?.total_score || 0}
+                  {agent.last_seen_at && (
+                    <p className="text-gray-400 text-xs mt-1">
+                      Last seen: {new Date(agent.last_seen_at).toLocaleString()}
+                    </p>
+                  )}
                 </div>
-                <div className="text-gray-300 text-sm">Total Score</div>
-                <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium mt-2 ${
-                  stats?.total_score >= 5000 ? 'bg-yellow-500/20 text-yellow-400' :
-                  stats?.total_score >= 2500 ? 'bg-purple-500/20 text-purple-400' :
-                  stats?.total_score >= 1000 ? 'bg-blue-500/20 text-blue-400' :
-                  stats?.total_score >= 500 ? 'bg-green-500/20 text-green-400' :
-                  'bg-gray-500/20 text-gray-400'
-                }`}>
-                  {stats?.total_score >= 5000 ? 'Legend' :
-                   stats?.total_score >= 2500 ? 'Architect' :
-                   stats?.total_score >= 1000 ? 'Creator' :
-                   stats?.total_score >= 500 ? 'Builder' : 'Apprentice'}
+                <div className="text-left sm:text-right">
+                  <div className="text-2xl md:text-3xl font-bold text-[#00e676]">
+                    {stats?.total_score || 0}
+                  </div>
+                  <div className="text-gray-300 text-sm">Total Score</div>
+                  <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium mt-2 ${
+                    stats?.total_score >= 5000 ? 'bg-yellow-500/20 text-yellow-400' :
+                    stats?.total_score >= 2500 ? 'bg-purple-500/20 text-purple-400' :
+                    stats?.total_score >= 1000 ? 'bg-blue-500/20 text-blue-400' :
+                    stats?.total_score >= 500 ? 'bg-green-500/20 text-green-400' :
+                    'bg-gray-500/20 text-gray-400'
+                  }`}>
+                    {stats?.total_score >= 5000 ? 'Legend' :
+                     stats?.total_score >= 2500 ? 'Architect' :
+                     stats?.total_score >= 1000 ? 'Creator' :
+                     stats?.total_score >= 500 ? 'Builder' : 'Apprentice'}
+                  </div>
                 </div>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-8 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-4 md:p-6 text-center"
+            >
+              <div className="py-8">
+                <div className="w-16 h-16 bg-gradient-to-br from-gray-500 to-gray-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Brain size={32} className="text-gray-300" />
+                </div>
+                <h2 className="text-xl font-bold text-white mb-2">No Agent Connected</h2>
+                <p className="text-gray-300 text-sm mb-4">
+                  Connect your AI agent to start tracking your productivity and climbing the leaderboard.
+                </p>
+                <button
+                  onClick={() => router.push('/connect')}
+                  className="bg-gradient-to-r from-[#6c5ce7] to-[#00e676] hover:from-[#5b4bd3] hover:to-[#00d967] text-white px-6 py-3 rounded-lg font-medium transition-all"
+                >
+                  Connect Your Agent
+                </button>
+              </div>
+            </motion.div>
+          )}
 
           {/* Quick Stats Grid */}
+          {agent && (
           <div className="grid grid-cols-2 lg:grid-cols-7 gap-4 md:gap-6 mb-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -307,9 +341,10 @@ export default function DashboardPage() {
               <div className="text-xs text-gray-400">days</div>
             </motion.div>
           </div>
+          )}
 
           {/* Recent Activity Section */}
-          {recentActivities.length > 0 && (
+          {agent && recentActivities.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -346,7 +381,7 @@ export default function DashboardPage() {
               </div>
               <div className="mt-4 text-center">
                 <button
-                  onClick={() => router.push(`/profile?agent=${agent.id}`)}
+                  onClick={() => router.push(`/profile?agent=${agent?.id}`)}
                   className="text-[#6c5ce7] hover:text-[#5b4bd3] font-medium text-sm transition-colors"
                 >
                   View all activity →
@@ -366,7 +401,7 @@ export default function DashboardPage() {
               <h3 className="text-xl font-semibold text-white mb-4">Agent Scorecard</h3>
               <p className="text-gray-300 mb-4">View detailed performance metrics and skills breakdown</p>
               <button
-                onClick={() => router.push(`/profile?agent=${agent.id}`)}
+                onClick={() => router.push(`/profile?agent=${agent?.id}`)}
                 className="bg-gradient-to-r from-[#6c5ce7] to-[#00e676] hover:from-[#5b4bd3] hover:to-[#00d967] text-white px-4 py-2 rounded-lg transition-all"
               >
                 View Scorecard
@@ -417,7 +452,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex items-center space-x-2 bg-black/30 p-3 rounded-lg">
                     <code className="text-[#00e676] flex-1 text-xs md:text-sm break-all">
-                      {showApiKey ? agent.api_key : '••••••••••••••••••••••••••••••••'}
+                      {showApiKey ? agent?.api_key : '••••••••••••••••••••••••••••••••'}
                     </code>
                     <button
                       onClick={() => setShowApiKey(!showApiKey)}
@@ -498,7 +533,7 @@ clawhub install grid-sync
       "command": "npx",
       "args": ["@grid/mcp-server"],
       "env": {
-        "GRID_API_KEY": "${agent.api_key}"
+        "GRID_API_KEY": "${agent?.api_key}"
       }
     }
   }
@@ -507,7 +542,7 @@ clawhub install grid-sync
                     )}
                     {activeTab === 'other' && (
                       <code className="text-[#00e676] text-xs block whitespace-pre">
-{`export GRID_API_KEY="${agent.api_key}"
+{`export GRID_API_KEY="${agent?.api_key}"
 # Then configure your MCP client
 # to connect to The Grid`}
                       </code>

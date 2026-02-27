@@ -13,6 +13,8 @@ import { ScoreEducation } from '@/components/ScoreEducation';
 import { AchievementBadge } from '@/components/AchievementBadge';
 import { PerformanceChart } from '@/components/PerformanceChart';
 import { OnboardingReplayButton } from '@/components/OnboardingTooltips';
+import { AgentAvatarPicker } from '@/components/AgentAvatarPicker';
+import { AgentAvatar } from '@/components/AgentAvatar';
 
 interface AgentProfile {
   agent: {
@@ -88,6 +90,7 @@ interface AgentProfile {
     icon: string;
     category: string;
     unlocked_at: string;
+    points?: number;
   }>;
   recent_activities: Array<{
     type: string;
@@ -127,6 +130,7 @@ function ProfileContent() {
   const [activeTab, setActiveTab] = useState('overview');
   const [showApiKey, setShowApiKey] = useState(false);
   const [showAgentSettings, setShowAgentSettings] = useState(false);
+  const [agentAvatarEmoji, setAgentAvatarEmoji] = useState<string>('');
 
   useEffect(() => {
     if (!loading) {
@@ -149,11 +153,67 @@ function ProfileContent() {
       if (!response.ok) throw new Error('Failed to fetch agent profile');
       const data = await response.json();
       setProfileData(data);
+      
+      // Extract avatar emoji from agent's connection_config
+      const avatarEmoji = data.agent?.connection_config?.avatar_emoji || '';
+      setAgentAvatarEmoji(avatarEmoji);
     } catch (error) {
       console.error('Error loading agent profile:', error);
       router.push('/dashboard');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleAvatarUpdate = async (emoji: string) => {
+    try {
+      const response = await fetch('/api/agent/avatar', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ avatarEmoji: emoji }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update avatar');
+      
+      setAgentAvatarEmoji(emoji);
+      
+      // Refresh the profile data to show updated avatar
+      if (profileData?.agent?.id) {
+        await loadAgentProfile(profileData.agent.id);
+      }
+    } catch (error) {
+      console.error('Error updating agent avatar:', error);
+    }
+  };
+
+  const handleRegenerateApiKey = async () => {
+    if (!profileData?.agent?.id) return;
+    
+    const confirmed = confirm('Are you sure you want to regenerate your API key? This will invalidate the current key and you\'ll need to update your agent configuration.');
+    if (!confirmed) return;
+    
+    try {
+      const response = await fetch('/api/agent/regenerate-key', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to regenerate API key');
+      
+      const data = await response.json();
+      
+      // Refresh the profile data to show new API key
+      await loadAgentProfile(profileData.agent.id);
+      
+      // Show success message or new key
+      alert('API key regenerated successfully! Please update your agent configuration with the new key.');
+    } catch (error) {
+      console.error('Error regenerating API key:', error);
+      alert('Failed to regenerate API key. Please try again.');
     }
   };
 
@@ -171,12 +231,26 @@ function ProfileContent() {
   const disconnectAgent = async () => {
     if (!profileData?.agent?.id) return;
     
+    const confirmed = confirm('Are you sure you want to disconnect your agent? This will mark it as offline and stop tracking activity.');
+    if (!confirmed) return;
+    
     try {
-      // For now, just redirect to connect page
-      // TODO: Implement proper disconnect functionality
-      router.push('/connect?reconnect=true');
+      const response = await fetch('/api/agent/disconnect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to disconnect agent');
+      
+      // Refresh the profile data to show updated status
+      await loadAgentProfile(profileData.agent.id);
+      
+      alert('Agent disconnected successfully. You can reconnect it anytime from the Agent Setup page.');
     } catch (error) {
       console.error('Error disconnecting agent:', error);
+      alert('Failed to disconnect agent. Please try again.');
     }
   };
 
@@ -364,9 +438,11 @@ function ProfileContent() {
           >
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <div className="flex items-center space-x-4 md:space-x-6">
-                <div className="w-14 h-14 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-[#6c5ce7] to-[#00e676] flex items-center justify-center text-white font-bold text-xl md:text-3xl flex-shrink-0">
-                  {agentData.name.charAt(0).toUpperCase()}
-                </div>
+                <AgentAvatar 
+                  agentName={agentData.name}
+                  avatarEmoji={agentAvatarEmoji}
+                  size="lg"
+                />
                 
                 <div className="min-w-0">
                   <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">{agentData.name}</h1>
@@ -454,6 +530,15 @@ function ProfileContent() {
                   </div>
                 </div>
 
+                {/* Agent Avatar Picker */}
+                <div className="space-y-2">
+                  <AgentAvatarPicker
+                    currentEmoji={agentAvatarEmoji}
+                    onSelect={handleAvatarUpdate}
+                    agentName={profileData?.agent?.name || 'Agent'}
+                  />
+                </div>
+
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3 pt-2">
                   {profileData.agent.status === 'connected' ? (
@@ -483,7 +568,7 @@ function ProfileContent() {
                   </button>
                   
                   <button
-                    onClick={() => {/* TODO: Implement regenerate API key */}}
+                    onClick={handleRegenerateApiKey}
                     className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors flex items-center space-x-2"
                   >
                     <RefreshCw size={16} />
@@ -843,7 +928,8 @@ function ProfileContent() {
                     };
                     
                     const colors = categoryColors[achievement.category] || categoryColors.special;
-                    const achievementPoints = 50; // TODO: Get from achievement data
+                    // Get points from achievement data or default to 25
+                    const achievementPoints = achievement.points || 25;
                     
                     return (
                       <motion.div

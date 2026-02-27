@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/auth/context';
 import { createClient } from '@/lib/supabase/client';
 import { LayoutDashboard, Trophy, User, LogOut, Settings, ChevronDown } from 'lucide-react';
 import { ScorePill } from './ScorePill';
+import { AgentAvatar } from './AgentAvatar';
 
 export function Navbar() {
   const { user, profile, agent } = useAuth();
@@ -148,9 +149,13 @@ export function Navbar() {
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     className="flex items-center space-x-2 text-sm bg-white/10 hover:bg-white/20 rounded-lg p-2 transition-colors"
                   >
-                    <div className="w-8 h-8 bg-gradient-to-br from-[#6c5ce7] to-[#00e676] rounded-full flex items-center justify-center text-white font-medium text-sm">
-                      {profile?.name?.[0]?.toUpperCase() || 'U'}
-                    </div>
+                    <AgentAvatar 
+                      agentName={agent?.name}
+                      userName={profile?.name}
+                      avatarEmoji={agent?.connection_config?.avatar_emoji}
+                      size="sm"
+                      className="rounded-full"
+                    />
                     <span className="hidden md:inline text-white font-medium">{profile?.name || 'User'}</span>
                     <ChevronDown size={14} className="hidden md:inline text-gray-400" />
                   </button>

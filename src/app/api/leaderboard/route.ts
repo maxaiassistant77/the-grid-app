@@ -18,10 +18,13 @@ export async function GET(request: NextRequest) {
 
     const supabase = createAdminClient();
 
-    // Use the leaderboard view for base data
+    // Use the leaderboard view for base data, and join with agents to get connection_config
     let query = supabase
       .from('leaderboard')
-      .select('*');
+      .select(`
+        *,
+        agents!inner(connection_config)
+      `);
 
     // Apply sorting based on tab
     switch (filters.tab) {
@@ -95,6 +98,7 @@ export async function GET(request: NextRequest) {
           name: (entry as any).name,
           agent_name: (entry as any).agent_name,
           avatar_url: (entry as any).avatar_url,
+          avatar_emoji: (entry as any).agents?.connection_config?.avatar_emoji || null,
           total_score: (entry as any).total_score,
           level: (entry as any).level,
           tasks_completed: (entry as any).tasks_completed,

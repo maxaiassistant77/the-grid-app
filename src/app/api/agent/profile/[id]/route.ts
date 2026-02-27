@@ -172,6 +172,7 @@ export async function GET(
         description: ua.achievements.description,
         icon: ua.achievements.icon,
         category: ua.achievements.category,
+        points: ua.achievements.points,
         unlocked_at: ua.unlocked_at
       })),
       recent_activities: (activities || []).map((activity: any) => ({
