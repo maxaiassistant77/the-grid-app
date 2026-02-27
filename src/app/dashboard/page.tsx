@@ -108,7 +108,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#1a1a2e] to-[#16213e]">
       <Navbar />
-      <OnboardingTooltips />
+      {/* <OnboardingTooltips /> */}
       
       <div className="pt-16 pb-24 md:pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

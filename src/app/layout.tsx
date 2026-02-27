@@ -89,7 +89,7 @@ export default function RootLayout({
           <AchievementProvider>
             {children}
             <MobileNav />
-            <OnboardingTooltips />
+            {/* <OnboardingTooltips /> */}
           </AchievementProvider>
         </AuthProvider>
       </body>
