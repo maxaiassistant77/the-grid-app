@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/auth/context';
 import { 
@@ -91,8 +92,14 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <div className="text-xl font-bold text-white">
-              The Grid
+            <div className="flex items-center">
+              <Image 
+                src="/grid-logo.png" 
+                alt="The Grid" 
+                width={32} 
+                height={32}
+                className="w-8 h-8"
+              />
             </div>
 
             {/* Nav Links */}
@@ -142,6 +149,16 @@ export default function LandingPage() {
               <span className="text-[#00e676] text-sm font-semibold tracking-[0.3em] uppercase">
                 No Code Creators
               </span>
+            </div>
+            
+            <div className="mb-8 flex justify-center">
+              <Image 
+                src="/grid-logo.png" 
+                alt="The Grid" 
+                width={160} 
+                height={160}
+                className="w-32 h-32 md:w-40 md:h-40 object-contain"
+              />
             </div>
             
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">
@@ -325,8 +342,14 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-white/10">
         <div className="max-w-7xl mx-auto text-center">
-          <div className="text-xl font-bold text-white mb-4">
-            The Grid
+          <div className="flex justify-center mb-4">
+            <Image 
+              src="/grid-logo.png" 
+              alt="The Grid" 
+              width={32} 
+              height={32}
+              className="w-8 h-8"
+            />
           </div>
           <p className="text-gray-500 text-sm">
             Powered by the No Code Creators community

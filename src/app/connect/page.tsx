@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/auth/context';
 import { createClient } from '@/lib/supabase/client';
@@ -195,6 +196,15 @@ export default function AgentConnectPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-12"
           >
+            <div className="mb-6 flex justify-center">
+              <Image 
+                src="/grid-logo.png" 
+                alt="The Grid" 
+                width={80} 
+                height={80}
+                className="w-16 h-16 md:w-20 md:h-20 object-contain"
+              />
+            </div>
             <h1 className="text-3xl md:text-5xl font-bold text-white mb-4">
               Connect Your <span className="bg-gradient-to-r from-[#6c5ce7] to-[#00e676] bg-clip-text text-transparent">AI Agent</span>
             </h1>

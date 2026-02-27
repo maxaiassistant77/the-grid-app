@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/auth/context';
 import { createClient } from '@/lib/supabase/client';
@@ -180,6 +181,15 @@ function AuthPageContent() {
         animate={{ opacity: 1, y: 0 }}
         className="text-center mb-8 relative z-10"
       >
+        <div className="mb-4 flex justify-center">
+          <Image 
+            src="/grid-logo.png" 
+            alt="The Grid" 
+            width={100} 
+            height={100}
+            className="w-20 h-20 md:w-24 md:h-24 object-contain"
+          />
+        </div>
         <p className="text-[#00e676] text-sm font-semibold tracking-[0.3em] uppercase mb-2">
           No Code Creators
         </p>

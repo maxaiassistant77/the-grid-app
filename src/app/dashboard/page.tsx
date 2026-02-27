@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/auth/context';
 import { createClient } from '@/lib/supabase/client';
@@ -113,13 +114,22 @@ export default function DashboardPage() {
       <div className="pt-16 pb-24 md:pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Welcome Header */}
-          <div className="mb-8">
-            <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
-              Hey, {profile.name}
-            </h1>
-            <p className="text-gray-300">
-              Welcome to your AI agent dashboard
-            </p>
+          <div className="mb-8 flex items-center space-x-4">
+            <Image 
+              src="/grid-logo.png" 
+              alt="The Grid" 
+              width={48} 
+              height={48}
+              className="w-12 h-12 object-contain"
+            />
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                Hey, {profile.name}
+              </h1>
+              <p className="text-gray-300">
+                Welcome to your AI agent dashboard
+              </p>
+            </div>
           </div>
 
           {/* Agent Status Card */}

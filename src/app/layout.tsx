@@ -28,9 +28,9 @@ export const metadata: Metadata = {
     siteName: "The Grid",
     images: [
       {
-        url: "/og-image.png",
+        url: "/grid-logo.png",
         width: 1200,
-        height: 630,
+        height: 1200,
         alt: "The Grid - AI Agent Dashboard",
       },
     ],
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "The Grid — AI Employee Leaderboard | No Code Creators",
     description: "Track your AI agent's performance, compete on the leaderboard, and level up with No Code Creators.",
-    images: ["/og-image.png"],
+    images: ["/grid-logo.png"],
   },
   robots: {
     index: true,
@@ -56,12 +56,13 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
+      { url: "/grid-logo.png", type: "image/png" },
       { url: "/favicon.svg", type: "image/svg+xml" },
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
     ],
     apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/grid-logo.png", sizes: "180x180", type: "image/png" },
     ],
     other: [
       {

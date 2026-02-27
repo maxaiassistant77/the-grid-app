@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/auth/context';
 import { createClient } from '@/lib/supabase/client';
@@ -62,9 +63,15 @@ export function Navbar() {
           <div className="flex items-center">
             <button
               onClick={() => router.push('/dashboard')}
-              className="text-xl font-bold text-white hover:text-[#6c5ce7] transition-colors"
+              className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
             >
-              The Grid
+              <Image 
+                src="/grid-logo.png" 
+                alt="The Grid" 
+                width={40} 
+                height={40}
+                className="w-8 h-8"
+              />
             </button>
           </div>
 
