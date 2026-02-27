@@ -68,10 +68,10 @@ export function Navbar() {
               <Image 
                 src="/grid-logo.png" 
                 alt="The Grid" 
-                width={160} 
-                height={87}
-                className="h-12 w-auto"
-                style={{ filter: 'drop-shadow(0 0 10px rgba(108, 92, 231, 0.7))' }}
+                width={240} 
+                height={130}
+                className="h-16 w-auto"
+                style={{ filter: 'drop-shadow(0 0 12px rgba(108, 92, 231, 0.8))' }}
               />
             </button>
           </div>
