@@ -65,19 +65,14 @@ export function Navbar() {
               onClick={() => router.push('/dashboard')}
               className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
             >
-              <div 
-                className="rounded-xl overflow-hidden" 
-                style={{ filter: 'drop-shadow(0 0 12px rgba(108, 92, 231, 0.5))' }}
-              >
-                <Image 
-                  src="/grid-logo.png" 
-                  alt="The Grid" 
-                  width={40} 
-                  height={40}
-                  className="w-8 h-8"
-                  style={{ mixBlendMode: 'screen' }}
-                />
-              </div>
+              <Image 
+                src="/grid-logo.png" 
+                alt="The Grid" 
+                width={120} 
+                height={65}
+                className="h-8 w-auto"
+                style={{ filter: 'drop-shadow(0 0 8px rgba(108, 92, 231, 0.6))' }}
+              />
             </button>
           </div>
 

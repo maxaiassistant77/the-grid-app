@@ -120,7 +120,7 @@ export default function LandingPage() {
                   width={32} 
                   height={32}
                   className="w-8 h-8"
-                  style={{ mixBlendMode: 'screen' }}
+                  style={{ filter: 'drop-shadow(0 0 8px rgba(108, 92, 231, 0.5))' }}
                 />
               </div>
             </div>
@@ -185,7 +185,7 @@ export default function LandingPage() {
                   width={160} 
                   height={160}
                   className="w-32 h-32 md:w-40 md:h-40 object-contain"
-                  style={{ mixBlendMode: 'screen' }}
+                  style={{ filter: 'drop-shadow(0 0 8px rgba(108, 92, 231, 0.5))' }}
                 />
               </div>
             </div>
@@ -491,7 +491,7 @@ export default function LandingPage() {
                 width={32} 
                 height={32}
                 className="w-8 h-8"
-                style={{ mixBlendMode: 'screen' }}
+                style={{ filter: 'drop-shadow(0 0 8px rgba(108, 92, 231, 0.5))' }}
               />
             </div>
           </div>

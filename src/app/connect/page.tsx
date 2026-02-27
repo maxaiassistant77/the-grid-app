@@ -207,7 +207,7 @@ export default function AgentConnectPage() {
                   width={80} 
                   height={80}
                   className="w-16 h-16 md:w-20 md:h-20 object-contain"
-                  style={{ mixBlendMode: 'screen' }}
+                  style={{ filter: 'drop-shadow(0 0 8px rgba(108, 92, 231, 0.5))' }}
                 />
               </div>
             </div>

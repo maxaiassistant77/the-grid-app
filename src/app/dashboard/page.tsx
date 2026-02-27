@@ -167,7 +167,7 @@ export default function DashboardPage() {
                 width={48} 
                 height={48}
                 className="w-12 h-12 object-contain"
-                style={{ mixBlendMode: 'screen' }}
+                style={{ filter: 'drop-shadow(0 0 8px rgba(108, 92, 231, 0.5))' }}
               />
             </div>
             <div>

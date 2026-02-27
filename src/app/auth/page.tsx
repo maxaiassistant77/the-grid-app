@@ -192,7 +192,7 @@ function AuthPageContent() {
               width={100} 
               height={100}
               className="w-20 h-20 md:w-24 md:h-24 object-contain"
-              style={{ mixBlendMode: 'screen' }}
+              style={{ filter: 'drop-shadow(0 0 8px rgba(108, 92, 231, 0.5))' }}
             />
           </div>
         </div>
