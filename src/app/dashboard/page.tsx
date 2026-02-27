@@ -156,20 +156,7 @@ export default function DashboardPage() {
       <div className="pt-16 pb-24 md:pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Welcome Header */}
-          <div className="mb-8 flex items-center space-x-4">
-            <div 
-              className="rounded-xl overflow-hidden" 
-              style={{ filter: 'drop-shadow(0 0 12px rgba(108, 92, 231, 0.5))' }}
-            >
-              <Image 
-                src="/grid-logo.png" 
-                alt="The Grid" 
-                width={48} 
-                height={48}
-                className="w-12 h-12 object-contain"
-                style={{ filter: 'drop-shadow(0 0 8px rgba(108, 92, 231, 0.5))' }}
-              />
-            </div>
+          <div className="mb-8">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
                 Hey, {profile.name}

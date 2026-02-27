@@ -181,20 +181,15 @@ function AuthPageContent() {
         animate={{ opacity: 1, y: 0 }}
         className="text-center mb-8 relative z-10"
       >
-        <div className="mb-4 flex justify-center">
-          <div 
-            className="rounded-xl overflow-hidden" 
-            style={{ filter: 'drop-shadow(0 0 12px rgba(108, 92, 231, 0.5))' }}
-          >
-            <Image 
-              src="/grid-logo.png" 
-              alt="The Grid" 
-              width={100} 
-              height={100}
-              className="w-20 h-20 md:w-24 md:h-24 object-contain"
-              style={{ filter: 'drop-shadow(0 0 8px rgba(108, 92, 231, 0.5))' }}
-            />
-          </div>
+        <div className="mb-8 flex justify-center">
+          <Image 
+            src="/grid-logo.png" 
+            alt="The Grid" 
+            width={280} 
+            height={153}
+            className="w-56 md:w-72 h-auto"
+            style={{ filter: 'drop-shadow(0 0 16px rgba(108, 92, 231, 0.8))' }}
+          />
         </div>
         <p className="text-[#00e676] text-sm font-semibold tracking-[0.3em] uppercase mb-2">
           No Code Creators
