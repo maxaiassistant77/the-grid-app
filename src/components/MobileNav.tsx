@@ -37,8 +37,8 @@ export function MobileNav() {
                 {isActive && (
                   <motion.div
                     layoutId="mobile-nav-indicator"
-                    className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-[3px] rounded-full bg-gradient-to-r from-[#6c5ce7] to-[#00e676]"
-                    style={{ boxShadow: '0 0 12px rgba(108,92,231,0.6), 0 0 4px rgba(108,92,231,0.4)' }}
+                    className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-[3px] rounded-full bg-gradient-to-r from-yellow-400 to-yellow-500"
+                    style={{ boxShadow: '0 0 12px rgba(251,191,36,0.6), 0 0 4px rgba(251,191,36,0.4)' }}
                     transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                   />
                 )}
@@ -50,12 +50,12 @@ export function MobileNav() {
                     size={22}
                     strokeWidth={isActive ? 2.5 : 1.5}
                     className={`transition-colors duration-200 ${
-                      isActive ? 'text-[#6c5ce7] drop-shadow-[0_0_6px_rgba(108,92,231,0.5)]' : 'text-gray-500'
+                      isActive ? 'text-yellow-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.5)]' : 'text-gray-500'
                     }`}
                   />
                 </motion.div>
                 <span className={`text-[10px] mt-1 font-semibold transition-colors duration-200 ${
-                  isActive ? 'text-[#6c5ce7]' : 'text-gray-500'
+                  isActive ? 'text-yellow-400' : 'text-gray-500'
                 }`}>
                   {item.label}
                 </span>
