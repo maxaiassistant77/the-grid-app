@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth/context';
 import { createClient } from '@/lib/supabase/client';
 import { Navbar } from '@/components/Navbar';
 import { SkeletonProfileSection, SkeletonCard } from '@/components/Skeleton';
-import { Brain, Plug, BookOpen, Trophy, BarChart3, Lock, Settings, Zap } from 'lucide-react';
+import { Brain, Plug, BookOpen, Trophy, BarChart3, Lock, Settings, Zap, Copy, Eye, EyeOff, RefreshCw, Unlink } from 'lucide-react';
 import { ShareableCard } from '@/components/ShareableCard';
 import { ScoreEducation } from '@/components/ScoreEducation';
 import { AchievementBadge } from '@/components/AchievementBadge';
@@ -125,6 +125,8 @@ function ProfileContent() {
   const [profileData, setProfileData] = useState<AgentProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [showAgentSettings, setShowAgentSettings] = useState(false);
 
   useEffect(() => {
     if (!loading) {
@@ -152,6 +154,29 @@ function ProfileContent() {
       router.push('/dashboard');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const copyApiKey = async () => {
+    if (profileData?.agent?.id && agent?.api_key) {
+      try {
+        await navigator.clipboard.writeText(agent.api_key);
+        // You could add a toast notification here
+      } catch (err) {
+        console.error('Failed to copy API key:', err);
+      }
+    }
+  };
+
+  const disconnectAgent = async () => {
+    if (!profileData?.agent?.id) return;
+    
+    try {
+      // For now, just redirect to connect page
+      // TODO: Implement proper disconnect functionality
+      router.push('/connect?reconnect=true');
+    } catch (error) {
+      console.error('Error disconnecting agent:', error);
     }
   };
 
@@ -377,6 +402,97 @@ function ProfileContent() {
               </div>
             </div>
           </motion.div>
+
+          {/* Agent Settings Section */}
+          {user?.id && agent?.id === profileData.agent.id && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-8 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-4 md:p-6"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold text-white flex items-center space-x-2">
+                  <Settings size={20} className="text-[#6c5ce7]" />
+                  <span>Agent Settings</span>
+                </h3>
+                <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  profileData.agent.status === 'connected' 
+                    ? 'bg-green-500/20 text-green-400' 
+                    : 'bg-red-500/20 text-red-400'
+                }`}>
+                  {profileData.agent.status}
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                {/* API Key Section */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-300">API Key</label>
+                  <div className="flex items-center space-x-2">
+                    <div className="flex-1 bg-black/30 p-3 rounded-lg font-mono text-sm">
+                      <code className="text-[#00e676]">
+                        {showApiKey && agent?.api_key 
+                          ? agent.api_key 
+                          : `${agent?.api_key?.substring(0, 12)}${'•'.repeat(20)}`
+                        }
+                      </code>
+                    </div>
+                    <button
+                      onClick={() => setShowApiKey(!showApiKey)}
+                      className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
+                      title={showApiKey ? 'Hide API key' : 'Show API key'}
+                    >
+                      {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                    <button
+                      onClick={copyApiKey}
+                      className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
+                      title="Copy API key"
+                    >
+                      <Copy size={16} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  {profileData.agent.status === 'connected' ? (
+                    <button
+                      onClick={disconnectAgent}
+                      className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors flex items-center space-x-2"
+                    >
+                      <Unlink size={16} />
+                      <span>Disconnect Agent</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => router.push('/connect')}
+                      className="px-4 py-2 bg-gradient-to-r from-[#6c5ce7] to-[#00e676] hover:from-[#5b4bd3] hover:to-[#00d967] text-white rounded-lg transition-all flex items-center space-x-2"
+                    >
+                      <Plug size={16} />
+                      <span>Reconnect Agent</span>
+                    </button>
+                  )}
+                  
+                  <button
+                    onClick={() => router.push('/connect')}
+                    className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors flex items-center space-x-2"
+                  >
+                    <Settings size={16} />
+                    <span>Setup Guide</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => {/* TODO: Implement regenerate API key */}}
+                    className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors flex items-center space-x-2"
+                  >
+                    <RefreshCw size={16} />
+                    <span>Regenerate Key</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
           {/* Tab Navigation */}
           <div className="mb-8">

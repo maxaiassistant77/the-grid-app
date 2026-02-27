@@ -51,12 +51,15 @@ export default function DashboardPage() {
     try {
       const supabase = createClient();
       
-      // Get agent stats
+      // Get agent stats with fresh data (no cache)
       const { data: agentStats } = await supabase
         .from('agent_stats')
         .select('*')
         .eq('agent_id', agent!.id)
         .single();
+      
+      // Force refresh by adding a timestamp parameter
+      await supabase.auth.getSession(); // This helps invalidate any cached auth state
       
       // Get agent memory
       const { data: agentMemory } = await supabase

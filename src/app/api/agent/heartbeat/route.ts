@@ -41,19 +41,29 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { metadata = {} } = body;
+    const { metadata = {}, model, platform, status } = body;
 
     const supabase = createAdminClient();
 
-    // Update agent last_seen_at and status
+    // Update agent last_seen_at, status, model, and platform
+    const updateData: any = {
+      status: status || 'connected',
+      last_seen_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    if (model) {
+      updateData.model = model;
+    }
+    
+    if (platform) {
+      updateData.platform = platform;
+    }
+    
     const { error: updateError } = await supabase
       .from('agents')
       // @ts-ignore - Supabase type inference issue
-      .update({
-        status: 'connected',
-        last_seen_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', agent.id);
 
     if (updateError) {
