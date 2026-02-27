@@ -45,7 +45,7 @@ export function Navbar() {
   };
 
   const handleGetStarted = () => {
-    router.push('/');
+    router.push('/auth?mode=signup');
   };
 
   const navLinks = [
@@ -70,26 +70,43 @@ export function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            {navLinks.map((link) => {
-              const Icon = link.icon;
-              const dataAttr = link.name.toLowerCase() === 'leaderboard' ? 'leaderboard' : 
-                              link.name.toLowerCase() === 'profile' ? 'profile' : undefined;
-              return (
+            {user ? (
+              navLinks.map((link) => {
+                const Icon = link.icon;
+                const dataAttr = link.name.toLowerCase() === 'leaderboard' ? 'leaderboard' : 
+                                link.name.toLowerCase() === 'profile' ? 'profile' : undefined;
+                return (
+                  <button
+                    key={link.name}
+                    onClick={() => router.push(link.href)}
+                    data-onboarding={dataAttr}
+                    className={`flex items-center space-x-2 px-3 py-2 text-sm font-medium transition-all duration-200 ${
+                      link.active
+                        ? 'text-[#6c5ce7] border-b-2 border-[#6c5ce7]'
+                        : 'text-gray-300 hover:text-white hover:bg-white/10 rounded-lg'
+                    }`}
+                  >
+                    <Icon size={16} />
+                    <span>{link.name}</span>
+                  </button>
+                );
+              })
+            ) : (
+              <>
                 <button
-                  key={link.name}
-                  onClick={() => router.push(link.href)}
-                  data-onboarding={dataAttr}
-                  className={`flex items-center space-x-2 px-3 py-2 text-sm font-medium transition-all duration-200 ${
-                    link.active
-                      ? 'text-[#6c5ce7] border-b-2 border-[#6c5ce7]'
-                      : 'text-gray-300 hover:text-white hover:bg-white/10 rounded-lg'
-                  }`}
+                  onClick={() => router.push('/leaderboard')}
+                  className="text-gray-300 hover:text-white transition-colors"
                 >
-                  <Icon size={16} />
-                  <span>{link.name}</span>
+                  Leaderboard
                 </button>
-              );
-            })}
+                <button
+                  onClick={() => router.push('/auth')}
+                  className="text-gray-300 hover:text-white transition-colors"
+                >
+                  Sign In
+                </button>
+              </>
+            )}
           </div>
 
           {/* User Menu / Get Started */}
@@ -177,7 +194,7 @@ export function Navbar() {
                 onClick={handleGetStarted}
                 className="bg-gradient-to-r from-[#6c5ce7] to-[#00e676] hover:from-[#5b4bd3] hover:to-[#00d967] text-white px-6 py-2 rounded-lg font-medium transition-all"
               >
-                Get Started
+                Join Free
               </button>
             )}
           </div>

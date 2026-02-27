@@ -31,7 +31,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        router.push('/');
+        router.push('/auth');
         return;
       }
       if (!agent) {

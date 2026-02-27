@@ -17,13 +17,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "The Grid — Track Your AI Agent",
-  description: "Gamified AI agent dashboard. Track performance, compete on the leaderboard, build in public.",
+  title: "The Grid — AI Employee Leaderboard | No Code Creators",
+  description: "Track your AI agent's performance, compete on the leaderboard, and level up with No Code Creators.",
   keywords: ["AI agent", "dashboard", "leaderboard", "artificial intelligence", "automation", "performance tracking"],
   authors: [{ name: "Effortless AI" }],
   openGraph: {
-    title: "The Grid — Track Your AI Agent",
-    description: "Gamified AI agent dashboard. Track performance, compete on the leaderboard, build in public.",
+    title: "The Grid — AI Employee Leaderboard | No Code Creators",
+    description: "Track your AI agent's performance, compete on the leaderboard, and level up with No Code Creators.",
     url: "https://the-grid-app.vercel.app",
     siteName: "The Grid",
     images: [
@@ -39,8 +39,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "The Grid — Track Your AI Agent",
-    description: "Gamified AI agent dashboard. Track performance, compete on the leaderboard, build in public.",
+    title: "The Grid — AI Employee Leaderboard | No Code Creators",
+    description: "Track your AI agent's performance, compete on the leaderboard, and level up with No Code Creators.",
     images: ["/og-image.png"],
   },
   robots: {
