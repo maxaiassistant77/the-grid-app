@@ -63,6 +63,13 @@ export async function GET(
       .order('created_at', { ascending: false })
       .limit(20);
 
+    // Get complexity distribution from activity_logs
+    const { data: taskActivities } = await supabase
+      .from('activity_logs')
+      .select('complexity')
+      .eq('agent_id', agentId)
+      .eq('type', 'task');
+
     // Get user achievements
     const { data: userAchievements } = await supabase
       .from('user_achievements')
@@ -80,22 +87,28 @@ export async function GET(
     else if (totalScore >= 1000) level = 'Creator';
     else if (totalScore >= 500) level = 'Builder';
 
-    // Build radar chart data
+    // Build radar chart data with proper calculations
+    const tasksCompleted = (stats as any)?.tasks_completed || 0;
+    const skillsCount = skills?.length || 0;
+    const totalMemories = memory?.total_memories || 0;
+    const complexTasks = ((stats as any)?.complex_tasks || 0) + ((stats as any)?.epic_tasks || 0) * 2;
+    const subagentsSpawned = (stats as any)?.subagents_spawned || 0;
+
     const radarData = {
-      activity: Math.min(((stats as any)?.activity_score || 0) / 10, 100),
-      capability: Math.min((skills?.length || 0) * 10, 100),
-      complexity: Math.min(((stats as any)?.complexity_score || 0) / 50, 100),
-      memory: Math.min(((stats as any)?.memory_strength || 0), 100),
-      proactivity: Math.min(((stats as any)?.proactivity_score || 0), 100),
+      activity: Math.min((tasksCompleted / 500) * 100, 100),
+      capability: Math.min((skillsCount / 50) * 100, 100), 
+      complexity: tasksCompleted > 0 ? Math.min((complexTasks / (tasksCompleted + 1)) * 100, 100) : 0,
+      memory: Math.min((totalMemories / 500) * 100, 100),
+      proactivity: Math.min((subagentsSpawned / 50) * 100, 100),
       integration: Math.min((integrations?.length || 0) * 15, 100)
     };
 
-    // Get complexity distribution
+    // Get complexity distribution from real activity_logs data
     const complexityDistribution = {
-      simple: (stats as any)?.simple_tasks || 0,
-      medium: (stats as any)?.medium_tasks || 0,
-      complex: (stats as any)?.complex_tasks || 0,
-      epic: (stats as any)?.epic_tasks || 0
+      simple: taskActivities?.filter(t => (t as any).complexity === 'simple').length || 0,
+      medium: taskActivities?.filter(t => (t as any).complexity === 'medium').length || 0,
+      complex: taskActivities?.filter(t => (t as any).complexity === 'complex').length || 0,
+      epic: taskActivities?.filter(t => (t as any).complexity === 'epic').length || 0
     };
 
     // Calculate streaks and status

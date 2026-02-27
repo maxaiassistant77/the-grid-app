@@ -8,13 +8,15 @@ import { useAuth } from '@/lib/auth/context';
 import { createClient } from '@/lib/supabase/client';
 import { Navbar } from '@/components/Navbar';
 import { SkeletonStatCard, SkeletonCard } from '@/components/Skeleton';
-import { CheckCircle2, Flame, BarChart3, Zap, Rocket, Eye, EyeOff, Copy } from 'lucide-react';
+import { CheckCircle2, Flame, BarChart3, Zap, Rocket, Eye, EyeOff, Copy, Brain } from 'lucide-react';
 import { OnboardingTooltips } from '@/components/OnboardingTooltips';
 
 export default function DashboardPage() {
   const { user, profile, agent, loading } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState<any>(null);
+  const [memory, setMemory] = useState<any>(null);
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showApiKey, setShowApiKey] = useState(false);
   const [activeTab, setActiveTab] = useState('openclaw');
@@ -46,12 +48,32 @@ export default function DashboardPage() {
   const loadDashboardData = async () => {
     try {
       const supabase = createClient();
+      
+      // Get agent stats
       const { data: agentStats } = await supabase
         .from('agent_stats')
         .select('*')
         .eq('agent_id', agent!.id)
         .single();
+      
+      // Get agent memory
+      const { data: agentMemory } = await supabase
+        .from('agent_memory')
+        .select('*')
+        .eq('agent_id', agent!.id)
+        .single();
+      
+      // Get recent activities
+      const { data: activities } = await supabase
+        .from('activity_logs')
+        .select('*')
+        .eq('agent_id', agent!.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
       setStats(agentStats);
+      setMemory(agentMemory);
+      setRecentActivities(activities || []);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
@@ -115,13 +137,19 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Welcome Header */}
           <div className="mb-8 flex items-center space-x-4">
-            <Image 
-              src="/grid-logo.png" 
-              alt="The Grid" 
-              width={48} 
-              height={48}
-              className="w-12 h-12 object-contain"
-            />
+            <div 
+              className="rounded-xl overflow-hidden" 
+              style={{ filter: 'drop-shadow(0 0 12px rgba(108, 92, 231, 0.5))' }}
+            >
+              <Image 
+                src="/grid-logo.png" 
+                alt="The Grid" 
+                width={48} 
+                height={48}
+                className="w-12 h-12 object-contain"
+                style={{ mixBlendMode: 'screen' }}
+              />
+            </div>
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
                 Hey, {profile.name}
@@ -174,7 +202,7 @@ export default function DashboardPage() {
           </motion.div>
 
           {/* Quick Stats Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -226,7 +254,68 @@ export default function DashboardPage() {
               </div>
               <div className="text-xl md:text-2xl font-bold text-[#6c5ce7]">{stats?.uptime_percentage || 0}%</div>
             </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 p-4 md:p-6"
+            >
+              <div className="flex items-center justify-between mb-3 md:mb-4">
+                <h3 className="text-gray-300 text-xs md:text-sm font-medium">Memory</h3>
+                <Brain size={20} className="text-purple-400" />
+              </div>
+              <div className="text-xl md:text-2xl font-bold text-white">{memory?.memory_depth_days || 0}</div>
+              <div className="text-xs text-gray-400">days</div>
+            </motion.div>
           </div>
+
+          {/* Recent Activity Section */}
+          {recentActivities.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="mb-8 bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 p-4 md:p-6"
+            >
+              <h3 className="text-xl font-semibold text-white mb-4">Recent Activity</h3>
+              <div className="space-y-3">
+                {recentActivities.slice(0, 5).map((activity, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                    <div className="flex items-center space-x-3 min-w-0">
+                      <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
+                        activity.complexity === 'epic' ? 'bg-yellow-400' :
+                        activity.complexity === 'complex' ? 'bg-red-400' :
+                        activity.complexity === 'medium' ? 'bg-purple-400' :
+                        'bg-green-400'
+                      }`} />
+                      <div className="min-w-0">
+                        <p className="text-white font-medium text-sm truncate">
+                          {activity.description || activity.type}
+                        </p>
+                        <p className="text-gray-400 text-xs">
+                          {new Date(activity.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    {activity.points_earned > 0 && (
+                      <div className="text-[#00e676] font-medium text-sm flex-shrink-0 ml-2">
+                        +{activity.points_earned} pts
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 text-center">
+                <button
+                  onClick={() => router.push(`/profile?agent=${agent.id}`)}
+                  className="text-[#6c5ce7] hover:text-[#5b4bd3] font-medium text-sm transition-colors"
+                >
+                  View all activity →
+                </button>
+              </div>
+            </motion.div>
+          )}
 
           {/* Coming Soon Sections */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">

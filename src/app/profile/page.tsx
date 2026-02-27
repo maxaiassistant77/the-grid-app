@@ -493,8 +493,56 @@ function ProfileContent() {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-300">Memory Depth</span>
-                      <span className="text-white font-semibold">{memory.memory_depth_days} days</span>
+                      <span className="text-white font-semibold">
+                        {memory.memory_depth_days || 0} days
+                      </span>
                     </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-300">Daily Velocity</span>
+                      <span className="text-white font-semibold">
+                        {memory.memory_depth_days > 0 ? 
+                          (memory.total_memories / memory.memory_depth_days).toFixed(1) : 
+                          memory.total_memories.toString()
+                        } memories/day
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-300">Memory Strength</span>
+                      <span className="text-white font-semibold">
+                        {(() => {
+                          // Calculate memory strength score
+                          const recencyWeight = memory.last_memory_at ? 
+                            (Date.now() - new Date(memory.last_memory_at).getTime()) < (24 * 60 * 60 * 1000) ? 40 : 20 : 0;
+                          const volumeWeight = Math.min((memory.total_memories / 100) * 30, 30);
+                          const depthWeight = Math.min((memory.memory_depth_days / 100) * 30, 30);
+                          const score = Math.round(recencyWeight + volumeWeight + depthWeight);
+                          return `${score}/100`;
+                        })()}
+                      </span>
+                    </div>
+                    {/* Memory Strength Progress Bar */}
+                    <div className="w-full bg-white/10 rounded-full h-2">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ 
+                          width: `${(() => {
+                            const recencyWeight = memory.last_memory_at ? 
+                              (Date.now() - new Date(memory.last_memory_at).getTime()) < (24 * 60 * 60 * 1000) ? 40 : 20 : 0;
+                            const volumeWeight = Math.min((memory.total_memories / 100) * 30, 30);
+                            const depthWeight = Math.min((memory.memory_depth_days / 100) * 30, 30);
+                            return Math.round(recencyWeight + volumeWeight + depthWeight);
+                          })()}%` 
+                        }}
+                        transition={{ duration: 1, delay: 0.5 }}
+                        className="h-2 rounded-full bg-gradient-to-r from-[#6c5ce7] to-[#00e676]"
+                      />
+                    </div>
+                    {memory.memory_depth_days > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-300">Oldest Recall</span>
+                        <span className="text-white font-semibold">{memory.memory_depth_days} days ago</span>
+                      </div>
+                    )}
                     {memory.last_memory_at && (
                       <div className="flex justify-between items-center">
                         <span className="text-gray-300">Last Memory</span>
