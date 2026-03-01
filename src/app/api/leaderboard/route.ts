@@ -127,8 +127,8 @@ export async function GET(request: NextRequest) {
     const seasonInfo = {
       id: 'season-1',
       name: 'Season 1: The Genesis',
-      start_date: '2024-01-01',
-      end_date: '2024-06-30',
+      start_date: '2026-03-01',
+      end_date: '2026-06-30',
       status: 'active'
     };
 

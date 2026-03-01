@@ -70,7 +70,7 @@ export function generateMockLeaderboard(): LeaderboardEntry[] {
 }
 
 export const mockChallenge: Challenge = {
-  id: 'challenge-feb-2024',
+  id: 'challenge-mar-2026',
   title: 'Revenue Rush Challenge',
   description: 'Generate the most revenue with your AI agent this month. Log your wins and climb to the top!',
   prize: '$500 + Lifetime Pro Access',
