@@ -176,13 +176,25 @@ function ProfileContent() {
       });
 
       if (!response.ok) throw new Error('Failed to update avatar');
-      
-      setAgentAvatarEmoji(emoji);
-      
-      // Refresh the profile data to show updated avatar
-      if (profileData?.agent?.id) {
-        await loadAgentProfile(profileData.agent.id);
-      }
+
+      const result = await response.json();
+      const savedEmoji = result.avatarEmoji ?? emoji;
+      setAgentAvatarEmoji(savedEmoji);
+
+      // Update profileData in place so avatar preview re-renders without a full reload
+      setProfileData((prev: any) => {
+        if (!prev?.agent) return prev;
+        return {
+          ...prev,
+          agent: {
+            ...prev.agent,
+            connection_config: {
+              ...prev.agent.connection_config,
+              avatar_emoji: savedEmoji,
+            },
+          },
+        };
+      });
     } catch (error) {
       console.error('Error updating agent avatar:', error);
     }

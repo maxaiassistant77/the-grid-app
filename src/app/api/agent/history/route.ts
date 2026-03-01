@@ -1,31 +1,53 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 
 export async function GET(request: NextRequest) {
   const supabase = createAdminClient();
-  
-  // Auth via Bearer token
+  const days = parseInt(request.nextUrl.searchParams.get('days') || '30');
+  const agentIdParam = request.nextUrl.searchParams.get('agent_id');
+
+  // Auth via Bearer token (agent API key)
   const authHeader = request.headers.get('authorization');
-  if (!authHeader?.startsWith('Bearer ')) {
+  if (authHeader?.startsWith('Bearer ')) {
+    const apiKey = authHeader.replace('Bearer ', '');
+    const { data: agent } = await supabase
+      .from('agents')
+      .select('id')
+      .eq('api_key', apiKey)
+      .single();
+    if (!agent) {
+      return NextResponse.json({ error: 'Invalid API key' }, { status: 401 });
+    }
+    const agentId = agentIdParam || agent.id;
+    const { data: history } = await supabase
+      .from('agent_daily_stats')
+      .select('*')
+      .eq('agent_id', agentId)
+      .order('date', { ascending: true })
+      .limit(days);
+    return NextResponse.json({ history: history || [], agent_id: agentId, days });
+  }
+
+  // Auth via session cookie (browser profile page)
+  const browserSupabase = await createClient();
+  const { data: { user } } = await browserSupabase.auth.getUser();
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  
-  const apiKey = authHeader.replace('Bearer ', '');
-  
-  // Find agent by API key
+
+  // Get the agent for this user (or use provided agent_id if it belongs to user)
   const { data: agent } = await supabase
     .from('agents')
     .select('id')
-    .eq('api_key', apiKey)
+    .eq('user_id', user.id)
     .single();
-  
+
   if (!agent) {
-    return NextResponse.json({ error: 'Invalid API key' }, { status: 401 });
+    return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
   }
 
-  // Also support query param for agent_id (for profile viewing)
-  const agentId = request.nextUrl.searchParams.get('agent_id') || agent.id;
-  const days = parseInt(request.nextUrl.searchParams.get('days') || '30');
+  const agentId = agentIdParam || agent.id;
   
   const { data: history } = await supabase
     .from('agent_daily_stats')
@@ -33,12 +55,8 @@ export async function GET(request: NextRequest) {
     .eq('agent_id', agentId)
     .order('date', { ascending: true })
     .limit(days);
-  
-  return NextResponse.json({
-    history: history || [],
-    agent_id: agentId,
-    days,
-  });
+
+  return NextResponse.json({ history: history || [], agent_id: agentId, days });
 }
 
 // Snapshot current stats for today
