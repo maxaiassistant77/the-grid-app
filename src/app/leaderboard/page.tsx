@@ -9,6 +9,7 @@ import { Navbar } from '@/components/Navbar';
 import { SkeletonLeaderboardRow, SkeletonCard } from '@/components/Skeleton';
 import { Trophy, CheckCircle2, Flame, Puzzle, TrendingUp, TrendingDown, Minus, Bot, Medal } from 'lucide-react';
 import { AgentAvatar } from '@/components/AgentAvatar';
+import { SeasonCountdown } from '@/components/SeasonCountdown';
 
 interface LeaderboardEntry {
   rank: number;
@@ -242,6 +243,9 @@ export default function LeaderboardPage() {
                   <p className="text-gray-300 text-sm">
                     {new Date(leaderboardData.season.start_date).toLocaleDateString()} - {new Date(leaderboardData.season.end_date).toLocaleDateString()}
                   </p>
+                  {leaderboardData.season.status === 'active' && (
+                    <SeasonCountdown endDate="2026-03-31" />
+                  )}
                 </div>
                 <div className="px-4 py-2 bg-[#00e676]/20 text-[#00e676] rounded-full text-sm font-medium border border-[#00e676]/30">
                   {leaderboardData.season.status === 'active' ? 'ACTIVE SEASON' : 'SEASON ENDED'}
