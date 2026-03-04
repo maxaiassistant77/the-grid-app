@@ -51,9 +51,9 @@ export function Navbar() {
   };
 
   const navLinks = [
+    { name: 'Profile', href: '/profile', active: pathname === '/profile', icon: User },
     { name: 'Dashboard', href: '/dashboard', active: pathname === '/dashboard', icon: LayoutDashboard },
     { name: 'Leaderboard', href: '/leaderboard', active: pathname === '/leaderboard', icon: Trophy },
-    { name: 'Profile', href: '/profile', active: pathname === '/profile', icon: User },
   ];
 
   return (
@@ -187,7 +187,7 @@ export function Navbar() {
                           className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10 text-left"
                         >
                           <Settings size={14} />
-                          <span>Agent Setup</span>
+                          <span>Agent Settings</span>
                         </button>
                         <div className="border-t border-white/10 my-1"></div>
                         <button

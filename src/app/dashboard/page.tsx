@@ -246,7 +246,7 @@ export default function DashboardPage() {
 
           {/* Quick Stats Grid */}
           {agent && (
-          <div className="grid grid-cols-2 lg:grid-cols-7 gap-4 md:gap-6 mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-7 gap-4 md:gap-6 mb-8 mx-auto max-w-7xl justify-items-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -349,44 +349,46 @@ export default function DashboardPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="mb-8 bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 p-4 md:p-6"
+              className="mb-8 bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 p-3 md:p-4"
             >
-              <h3 className="text-xl font-semibold text-white mb-4">Recent Activity</h3>
-              <div className="space-y-3">
-                {recentActivities.slice(0, 5).map((activity, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
-                    <div className="flex items-center space-x-3 min-w-0">
-                      <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
+              <h3 className="text-lg font-semibold text-white mb-3">Recent Activity</h3>
+              <div className="space-y-2">
+                {recentActivities.slice(0, 4).map((activity, i) => (
+                  <div key={i} className="flex items-center justify-between p-2 bg-white/5 rounded-lg">
+                    <div className="flex items-center space-x-2 min-w-0">
+                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                         activity.complexity === 'epic' ? 'bg-yellow-400' :
                         activity.complexity === 'complex' ? 'bg-red-400' :
                         activity.complexity === 'medium' ? 'bg-purple-400' :
                         'bg-green-400'
                       }`} />
                       <div className="min-w-0">
-                        <p className="text-white font-medium text-sm truncate">
+                        <p className="text-white font-medium text-xs truncate">
                           {activity.description || activity.type}
                         </p>
-                        <p className="text-gray-400 text-xs">
+                        <p className="text-gray-400 text-[10px]">
                           {new Date(activity.created_at).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
                     {activity.points_earned > 0 && (
-                      <div className="text-[#00e676] font-medium text-sm flex-shrink-0 ml-2">
-                        +{activity.points_earned} pts
+                      <div className="text-[#00e676] font-medium text-xs flex-shrink-0 ml-2">
+                        +{activity.points_earned}
                       </div>
                     )}
                   </div>
                 ))}
               </div>
-              <div className="mt-4 text-center">
-                <button
-                  onClick={() => router.push(`/profile?agent=${agent?.id}`)}
-                  className="text-[#6c5ce7] hover:text-[#5b4bd3] font-medium text-sm transition-colors"
-                >
-                  View all activity →
-                </button>
-              </div>
+              {recentActivities.length > 4 && (
+                <div className="mt-3 text-center">
+                  <button
+                    onClick={() => router.push(`/profile?agent=${agent?.id}#activity`)}
+                    className="text-[#6c5ce7] hover:text-[#5b4bd3] font-medium text-xs transition-colors"
+                  >
+                    View all activity →
+                  </button>
+                </div>
+              )}
             </motion.div>
           )}
 

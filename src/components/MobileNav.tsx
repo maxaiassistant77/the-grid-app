@@ -5,9 +5,9 @@ import { motion } from 'framer-motion';
 import { LayoutDashboard, Trophy, User, Settings } from 'lucide-react';
 
 const NAV_ITEMS = [
+  { href: '/profile', label: 'Profile', icon: User },
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
-  { href: '/profile', label: 'Profile', icon: User },
   { href: '/connect', label: 'Connect', icon: Settings },
 ];
 
