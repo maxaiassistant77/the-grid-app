@@ -104,13 +104,13 @@ export function Navbar() {
               <>
                 <button
                   onClick={() => router.push('/leaderboard')}
-                  className="text-gray-300 hover:text-white transition-colors"
+                  className="text-gray-300 hover:text-white hover:bg-white/10 px-3 py-2 rounded-lg transition-all"
                 >
                   Leaderboard
                 </button>
                 <button
                   onClick={() => router.push('/auth')}
-                  className="text-gray-300 hover:text-white transition-colors"
+                  className="text-gray-300 hover:text-white hover:bg-white/10 px-3 py-2 rounded-lg transition-all"
                 >
                   Sign In
                 </button>

@@ -64,7 +64,7 @@ export function MobileNav() {
           })}
         </div>
         {/* Safe area padding for devices with home indicator */}
-        <div className="h-[env(safe-area-inset-bottom)]" />
+        <div className="h-[env(safe-area-inset-bottom)] min-h-[1rem]" />
       </div>
     </nav>
   );
